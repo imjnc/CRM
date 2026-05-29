@@ -1,1 +1,1 @@
-@AGENTS.md
+@.github/agents/AGENTS.md

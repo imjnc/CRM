@@ -1,0 +1,224 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("sales_rep") // admin | manager | sales_rep
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+
+  assignedLeads Lead[]       @relation("LeadAssignee")
+  assignedTasks Task[]       @relation("TaskAssignee")
+  activities    Activity[]
+  comments      Comment[]
+  notes         Note[]
+  emails        LeadEmail[]
+  callLogs      CallLog[]
+}
+
+// NextAuth required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  crmId        String   @unique // CRM-LEAD-2024-00001
+  salutation   String?  // Mr, Mrs, Ms, Dr
+  firstName    String
+  lastName     String?
+  email        String?
+  mobile       String?
+  gender       String?
+  source       String?  // Website, Facebook, Referral, WhatsApp, etc.
+  status       String   @default("New") // New, Nurture, Qualified, Unqualified, Junk
+  jobTitle     String?
+  industry     String?
+  website      String?
+  territory    String?
+  annualRevenue Float?
+  noOfEmployees String? // 1-10, 11-50, 51-200, 201-500, 501-1000, 1000+
+  customData   Json?    // for custom fields
+
+  assignedToId   String?
+  organizationId String?
+
+  assignedTo   User?         @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  activities Activity[]
+  tasks      Task[]
+  comments   Comment[]
+  emails     LeadEmail[]
+  callLogs   CallLog[]
+  notes      Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model Organization {
+  id           String  @id @default(cuid())
+  name         String
+  website      String?
+  industry     String?
+  territory    String?
+  annualRevenue Float?
+  noOfEmployees String?
+  logo         String? // URL to uploaded logo
+
+  leads Lead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id      String @id @default(cuid())
+  type    String // created | status_change | field_edit | converted | comment | email | call | note | task
+  content String
+  meta    Json?  // extra data e.g. { from: "New", to: "Qualified" }
+
+  leadId String?
+  userId String
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("Backlog") // Backlog, In Progress, Done, Cancelled
+  priority    String    @default("Low")     // Low, Medium, High
+  dueDate     DateTime?
+  done        Boolean   @default(false)
+
+  leadId       String?
+  assignedToId String?
+
+  lead       Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  leadId String?
+  userId String
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Note {
+  id      String @id @default(cuid())
+  title   String
+  content String
+
+  leadId String?
+  userId String
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LeadEmail {
+  id        String @id @default(cuid())
+  subject   String
+  body      String
+  direction String @default("outbound") // outbound | inbound
+  fromEmail String?
+  toEmail   String?
+
+  leadId String?
+  userId String?
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model CallLog {
+  id          String  @id @default(cuid())
+  direction   String  @default("outbound") // outbound | inbound
+  duration    Int?    // in seconds
+  notes       String?
+  recordingUrl String?
+  fromNumber  String?
+  toNumber    String?
+
+  leadId String?
+  userId String?
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  calledAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+}
