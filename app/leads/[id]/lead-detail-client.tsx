@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronRight, Activity, Mail, CheckSquare, FileText } from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LeadRightPanel } from "@/components/leads/lead-right-panel"
 import { ActivityTab } from "@/components/leads/tabs/activity-tab"
@@ -20,7 +21,10 @@ const STATUS_DOT: Record<string, string> = {
   Junk:        "bg-red-500",
 }
 
-const TABS = [
+const TAB_IDS = ["activity", "emails", "tasks", "notes"] as const
+type LeadTab = (typeof TAB_IDS)[number]
+
+const TABS: Array<{ id: LeadTab; label: string; icon: typeof Activity }> = [
   { id: "activity", label: "Activity",  icon: Activity },
   { id: "emails",   label: "Emails",    icon: Mail },
   { id: "tasks",    label: "Tasks",     icon: CheckSquare },
@@ -30,11 +34,26 @@ const TABS = [
 type Lead = any
 
 export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
-  const [lead, setLead]             = useState<Lead>(initialLead)
-  const [activeTab, setActiveTab]   = useState("activity")
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [lead, setLead] = useState<Lead>(initialLead)
   const [statusOpen, setStatusOpen] = useState(false)
 
+  const activeTab = getActiveTab(searchParams.get("tab"))
+
+  useEffect(() => {
+    setLead(initialLead)
+  }, [initialLead])
+
   const fullName = `${lead.salutation ? lead.salutation + " " : ""}${lead.firstName}${lead.lastName ? " " + lead.lastName : ""}`
+
+  function setTab(tab: string) {
+    const nextTab = getActiveTab(tab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", nextTab)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   async function updateField(field: string, value: string) {
     const res = await fetch(`/api/leads/${lead.id}`, {
@@ -144,11 +163,16 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-0 border-b border-slate-200 bg-white px-5 shrink-0">
+      <div className="flex items-center gap-0 border-b border-slate-200 bg-white px-5 shrink-0" role="tablist" aria-label="Lead tabs">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id)}
+            type="button"
+            onClick={() => setTab(id)}
+            role="tab"
+            aria-selected={activeTab === id}
+            aria-controls={`lead-tabpanel-${id}`}
+            id={`lead-tab-${id}`}
             className={cn(
               "flex items-center gap-1.5 text-[13px] px-3 py-2.5 border-b-2 transition-colors",
               activeTab === id
@@ -164,7 +188,12 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
+        <div
+          className="flex-1 overflow-y-auto"
+          role="tabpanel"
+          id={`lead-tabpanel-${activeTab}`}
+          aria-labelledby={`lead-tab-${activeTab}`}
+        >
           {activeTab === "activity" && (
             <ActivityTab
               activities={lead.activities}
@@ -197,9 +226,13 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
           )}
         </div>
 
-        <LeadRightPanel lead={lead} onUpdate={updateField} onTabChange={setActiveTab} />
+        <LeadRightPanel lead={lead} onUpdate={updateField} onTabChange={setTab} />
       </div>
 
     </div>
   )
+}
+
+function getActiveTab(tab: string | null): LeadTab {
+  return (TAB_IDS as readonly string[]).includes(tab ?? "") ? (tab as LeadTab) : "activity"
 }

@@ -60,6 +60,7 @@ export function ActivityTab({ activities, leadId, onActivityCreated }: ActivityT
         <h3 className="text-[14px] font-semibold text-slate-900">Activity</h3>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
             onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
             className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
@@ -72,6 +73,7 @@ export function ActivityTab({ activities, leadId, onActivityCreated }: ActivityT
           {dropdownOpen && (
             <div className="absolute right-0 top-9 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-36 py-1">
               <button
+                type="button"
                 onMouseDown={() => { setDropdownOpen(false); setShowComment(true) }}
                 className="w-full text-left text-[13px] px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
               >

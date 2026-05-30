@@ -194,6 +194,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[14px] font-semibold text-slate-900">Emails</h3>
         <button
+          type="button"
           onClick={openCompose}
           className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
@@ -209,7 +210,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
             {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 shrink-0">
               <h2 className="text-[14px] font-semibold text-slate-900">New Email</h2>
-              <button onClick={() => setShowCompose(false)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
+              <button type="button" onClick={() => setShowCompose(false)} className="p-1 hover:bg-slate-100 rounded text-slate-400">
                 <X size={16} />
               </button>
             </div>
@@ -335,6 +336,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
           {emails.map((email) => (
             <div key={email.id} className="border border-slate-200 rounded-lg overflow-hidden">
               <button
+                type="button"
                 onClick={() => setExpandedId(expandedId === email.id ? null : email.id)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 text-left"
               >

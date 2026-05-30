@@ -62,6 +62,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[14px] font-semibold text-slate-900">Tasks</h3>
         <button
+          type="button"
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
@@ -140,7 +141,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
             <span className="text-slate-300">✓</span>
           </div>
           <p className="text-[13px] text-slate-500">No Tasks</p>
-          <button onClick={() => setShowForm(true)} className="text-[12px] text-slate-400 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-50">
+          <button type="button" onClick={() => setShowForm(true)} className="text-[12px] text-slate-400 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-50">
             Create Task
           </button>
         </div>
@@ -150,6 +151,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
             <div key={task.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
               {/* Completion circle */}
               <button
+                type="button"
                 onClick={() => onTaskToggle(task.id, !task.done)}
                 className={cn(
                   "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors",
@@ -190,7 +192,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
                 </div>
               </div>
 
-              <button className="p-1 hover:bg-slate-100 rounded text-slate-400">
+              <button type="button" className="p-1 hover:bg-slate-100 rounded text-slate-400">
                 <MoreHorizontal size={14} />
               </button>
             </div>

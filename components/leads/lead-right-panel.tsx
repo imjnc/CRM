@@ -182,6 +182,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
         </div>
         <div className="flex items-center gap-2 ml-10">
           <button
+            type="button"
             className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
             title="Call"
             onClick={() => setQrCodeOpen(true)}
@@ -189,6 +190,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
             <Phone size={14} />
           </button>
           <button
+            type="button"
             className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
             title="Email"
             onClick={() => onTabChange?.("emails")}
@@ -196,6 +198,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
             <Mail size={14} />
           </button>
           <button
+            type="button"
             className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
             title="Link"
             onClick={handleLink}

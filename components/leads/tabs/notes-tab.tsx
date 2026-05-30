@@ -47,6 +47,7 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[14px] font-semibold text-slate-900">Notes</h3>
         <button
+          type="button"
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
@@ -90,7 +91,7 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
       {notes.length === 0 && !showForm ? (
         <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
           <p className="text-[13px] text-slate-500">No Notes</p>
-          <button onClick={() => setShowForm(true)} className="text-[12px] text-slate-400 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-50">
+          <button type="button" onClick={() => setShowForm(true)} className="text-[12px] text-slate-400 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-50">
             Create Note
           </button>
         </div>
@@ -100,7 +101,7 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
             <div key={note.id} className="border border-slate-200 rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between mb-2">
                 <p className="text-[13px] font-semibold text-slate-900">{note.title}</p>
-                <button className="p-0.5 hover:bg-slate-100 rounded text-slate-400">
+                <button type="button" className="p-0.5 hover:bg-slate-100 rounded text-slate-400">
                   <MoreHorizontal size={13} />
                 </button>
               </div>
