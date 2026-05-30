@@ -142,18 +142,27 @@ export default function CanvasArea() {
       }
 
       if (!selectedId || isInput) return;
-      if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (e.key === 'Delete') {
         removeElement(selectedId);
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
         duplicateElement(selectedId);
       }
+      
+      const el = elements.find(el => el.id === selectedId);
+      if (el) {
+        const step = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowUp') { e.preventDefault(); updateElement(selectedId, { y: el.y - step }); }
+        if (e.key === 'ArrowDown') { e.preventDefault(); updateElement(selectedId, { y: el.y + step }); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); updateElement(selectedId, { x: el.x - step }); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); updateElement(selectedId, { x: el.x + step }); }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, removeElement, duplicateElement, undo, redo, copyElement, pasteElement, addElement]);
+  }, [selectedId, elements, removeElement, duplicateElement, undo, redo, copyElement, pasteElement, addElement, updateElement]);
 
   const handleContextMenu = (e: any) => {
     e.evt.preventDefault();
