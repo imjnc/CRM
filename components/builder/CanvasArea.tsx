@@ -12,13 +12,29 @@ const URLImage = ({ image, ...props }: any) => {
 
 export default function CanvasArea() {
   const [mounted, setMounted] = useState(false);
-  const { elements, selectedId, selectElement, updateElement, removeElement, duplicateElement } = useBuilderStore();
+  const { 
+    elements, 
+    selectedId, 
+    selectElement, 
+    updateElement, 
+    removeElement, 
+    duplicateElement,
+    setStageRef,
+    undo,
+    redo
+  } = useBuilderStore();
   const trRef = useRef<any>(null);
   const stageRef = useRef<any>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (stageRef.current) {
+      setStageRef(stageRef.current);
+    }
+  }, [stageRef, setStageRef]);
 
   useEffect(() => {
     if (selectedId && trRef.current && stageRef.current) {
@@ -32,12 +48,26 @@ export default function CanvasArea() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedId) return;
+      // Undo / Redo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        redo();
+      }
 
+      // Delete / Duplicate
+      if (!selectedId) return;
       if (e.key === 'Backspace' || e.key === 'Delete') {
         removeElement(selectedId);
       }
-
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
         duplicateElement(selectedId);
@@ -46,7 +76,7 @@ export default function CanvasArea() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, removeElement, duplicateElement]);
+  }, [selectedId, removeElement, duplicateElement, undo, redo]);
 
   if (!mounted) return null;
 

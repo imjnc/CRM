@@ -1,9 +1,10 @@
 "use client";
 
-import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode } from "lucide-react";
+import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo } from "lucide-react";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
+import jsPDF from "jspdf";
 
 const BRAND_COLORS = [
   '#111827', // Slate 900
@@ -14,8 +15,8 @@ const BRAND_COLORS = [
   '#6366f1', // Indigo 500
 ];
 
-export default function BuilderLayout({ children }: { children: React.ReactNode }) {
-  const { addElement, elements, selectedId, updateElement } = useBuilderStore();
+export default function BuilderLayout({ children, lead }: { children: React.ReactNode, lead?: any }) {
+  const { addElement, elements, selectedId, updateElement, stageRef, undo, redo, selectElement } = useBuilderStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [qrText, setQrText] = useState("");
 
@@ -60,20 +61,90 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
     }
   };
 
+  const exportPNG = () => {
+    if (!stageRef) return;
+    selectElement(null); // deselect before export to hide transformer
+    setTimeout(() => {
+      const dataURL = stageRef.toDataURL({ pixelRatio: 2 });
+      const link = document.createElement("a");
+      link.download = "design-export.png";
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, 100);
+  };
+
+  const exportPDF = () => {
+    if (!stageRef) return;
+    selectElement(null);
+    setTimeout(() => {
+      const dataURL = stageRef.toDataURL({ pixelRatio: 2 });
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [800, 600]
+      });
+      pdf.addImage(dataURL, "PNG", 0, 0, 800, 600);
+      pdf.save("design-export.pdf");
+    }, 100);
+  };
+
+  const injectLeadData = () => {
+    if (!lead) return;
+    const yStart = 50;
+    if (lead.name) addElement({ type: 'text', x: 50, y: yStart, text: lead.name, fontSize: 32, fill: '#111827' });
+    if (lead.email) addElement({ type: 'text', x: 50, y: yStart + 40, text: lead.email, fontSize: 20, fill: '#4b5563' });
+    if (lead.company) addElement({ type: 'text', x: 50, y: yStart + 70, text: lead.company, fontSize: 24, fill: '#3b82f6' });
+  };
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans">
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
         <div className="flex items-center gap-4">
           <h1 className="font-semibold text-gray-900">Design Builder</h1>
+          <div className="flex gap-2 ml-4 border-l border-gray-200 pl-4">
+            <button onClick={undo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100" title="Undo (Ctrl+Z)">
+              <Undo size={18} />
+            </button>
+            <button onClick={redo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100" title="Redo (Ctrl+Y)">
+              <Redo size={18} />
+            </button>
+          </div>
         </div>
         <div className="flex gap-2">
-          <button className="rounded bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-200">Preview</button>
-          <button className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black">Save Design</button>
+          <button onClick={exportPNG} className="flex items-center gap-2 rounded bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-200">
+            <Download size={16} /> PNG
+          </button>
+          <button onClick={exportPDF} className="flex items-center gap-2 rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black">
+            <Download size={16} /> PDF
+          </button>
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6">
+        <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6 scrollbar-hide">
           
+          {/* CRM Data Section */}
+          {lead && (
+            <section className="bg-blue-50 -mx-4 -mt-4 p-4 border-b border-blue-100 mb-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-blue-800 mb-3 flex items-center gap-1.5">
+                <Database size={14} />
+                CRM Context
+              </h2>
+              <div className="text-sm text-blue-900 mb-3">
+                <div className="font-medium">{lead.name}</div>
+                <div className="text-blue-700">{lead.company}</div>
+                <div className="text-blue-700 text-xs mt-1 truncate">{lead.email}</div>
+              </div>
+              <button 
+                onClick={injectLeadData}
+                className="w-full bg-blue-600 text-white text-sm font-medium rounded-md py-1.5 hover:bg-blue-700 transition-colors"
+              >
+                Inject Lead Data
+              </button>
+            </section>
+          )}
+
           <section>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Add Elements</h2>
             <div className="grid grid-cols-2 gap-2">
@@ -154,7 +225,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
             ) : (
               <div className="flex flex-col gap-4">
                 
-                {/* Text Properties */}
                 {selectedElement.type === 'text' && (
                   <>
                     <div className="flex flex-col gap-1.5">
@@ -178,7 +248,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
                   </>
                 )}
 
-                {/* Fill Color Property (Shapes & Text) */}
                 {['rect', 'circle', 'text'].includes(selectedElement.type) && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-medium text-gray-700">Color</label>
@@ -196,7 +265,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
                   </div>
                 )}
                 
-                {/* Brand Kit Section */}
                 {['rect', 'circle', 'text'].includes(selectedElement.type) && (
                   <div className="mt-4 border-t border-gray-100 pt-4">
                     <label className="text-xs font-medium text-gray-700 block mb-2">Brand Colors</label>

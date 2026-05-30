@@ -1,5 +1,5 @@
 | Task | Description | Status |
 |---|---|---|
-| Task 1 | Add Delete/Duplicate & Keyboard Shortcuts (`lib/stores/useBuilderStore.ts`, `components/builder/CanvasArea.tsx`) | done |
-| Task 2 | Build Dynamic Properties Panel (`components/builder/BuilderLayout.tsx`) | done |
-| Task 3 | Global Brand Colors Palette (`components/builder/BuilderLayout.tsx`) | done |
+| Task 1 | Implement Time Travel (Undo/Redo) in Store and Canvas | done |
+| Task 2 | Implement Export Engine (PNG & PDF) with jsPDF | done |
+| Task 3 | Implement CRM Context Auto-Fill for Builder | done |
