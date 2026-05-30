@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export type CanvasElement = {
   id: string;
-  type: 'rect' | 'circle' | 'text' | 'image' | 'star' | 'polygon' | 'line' | 'arrow' | 'heart';
+  type: 'rect' | 'circle' | 'text' | 'image' | 'star' | 'polygon' | 'line' | 'arrow' | 'heart' | 'embed' | 'chart';
   x: number;
   y: number;
   width?: number;
@@ -21,6 +21,11 @@ export type CanvasElement = {
   dash?: number[];
   scaleX?: number;
   scaleY?: number;
+  
+  // Interactive Media
+  embedUrl?: string;
+  chartType?: 'bar' | 'line' | 'pie';
+  chartData?: any[];
   
   // Advanced Properties
   fontFamily?: string;

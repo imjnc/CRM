@@ -1,5 +1,5 @@
 | Task | Description | Status |
 |---|---|---|
-| Task 1 | Store & Engine Data Expansion (CanvasElement Type) | done |
-| Task 2 | Canvas Area Rendering & Shortcuts (Star, Line, Heart, Arrow, Polygon) | done |
-| Task 3 | Sidebar UI Integration (Elements panel & Stroke styling) | done |
+| Task 1 | Setup Dependencies & Store (react-konva-utils, recharts) | done |
+| Task 2 | Canvas Integration (Group, Html overlay, Iframe, Recharts) | done |
+| Task 3 | Sidebar UI Integration (Embed settings, Chart Data editor) | done |

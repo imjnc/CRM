@@ -1,6 +1,6 @@
 "use client";
 
-import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Star, Heart, Minus, MoveRight, Hexagon, Triangle } from "lucide-react";
+import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Star, Heart, Minus, MoveRight, Hexagon, Triangle, AppWindow, BarChart3, Plus, Trash2 } from "lucide-react";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
@@ -11,6 +11,13 @@ const BRAND_COLORS = [
 ];
 
 const FONTS = ['Arial', 'Inter', 'Roboto', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia'];
+
+const DEFAULT_CHART_DATA = [
+  { name: 'Q1', value: 400 },
+  { name: 'Q2', value: 300 },
+  { name: 'Q3', value: 200 },
+  { name: 'Q4', value: 278 }
+];
 
 export default function BuilderLayout({ children, lead }: { children: React.ReactNode, lead?: any }) {
   const { addElement, elements, selectedId, updateElement, stageRef, undo, redo, selectElement } = useBuilderStore();
@@ -184,6 +191,18 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
           </section>
 
           <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-indigo-500 mb-3 flex items-center gap-1.5"><AppWindow size={14} /> Interactive Media</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => addElement({ type: 'embed', x: 50, y: 50, width: 400, height: 300, embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' })} className="flex flex-col items-center justify-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 p-3 hover:bg-indigo-100">
+                <AppWindow size={20} className="text-indigo-600" /><span className="text-xs font-medium text-indigo-900 text-center">Live Embed</span>
+              </button>
+              <button onClick={() => addElement({ type: 'chart', x: 50, y: 50, width: 400, height: 300, chartType: 'bar', chartData: DEFAULT_CHART_DATA })} className="flex flex-col items-center justify-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 p-3 hover:bg-indigo-100">
+                <BarChart3 size={20} className="text-indigo-600" /><span className="text-xs font-medium text-indigo-900 text-center">Data Chart</span>
+              </button>
+            </div>
+          </section>
+
+          <section>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5"><QrCode size={14} /> QR Generator</h2>
             <div className="flex flex-col gap-2">
               <input type="text" placeholder="Enter URL or Text" value={qrText} onChange={(e) => setQrText(e.target.value)} className="text-sm border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900" />
@@ -201,8 +220,80 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
             <div className="text-sm text-gray-400 italic mt-4 text-center">Select an element to edit properties</div>
           ) : (
             <>
+              {/* MEDIA & CHART SPECIFIC CONTROLS */}
+              {selectedElement.type === 'embed' && (
+                <section>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 mb-3">Live Embed Settings</h2>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs text-gray-500">Iframe URL</label>
+                    <input 
+                      type="text" 
+                      value={selectedElement.embedUrl || ''} 
+                      onChange={(e) => updateElement(selectedElement.id, { embedUrl: e.target.value })} 
+                      placeholder="https://..."
+                      className="text-sm border border-gray-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 w-full" 
+                    />
+                    <p className="text-[10px] text-gray-400 leading-tight">Supports YouTube embeds, Google Forms, Typeform, etc.</p>
+                  </div>
+                </section>
+              )}
+
+              {selectedElement.type === 'chart' && (
+                <section>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-indigo-600 mb-3">Live Chart Data</h2>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-gray-500">Chart Type</label>
+                      <select 
+                        value={selectedElement.chartType || 'bar'} 
+                        onChange={(e) => updateElement(selectedElement.id, { chartType: e.target.value as any })}
+                        className="text-sm border border-gray-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <option value="bar">Bar Chart</option>
+                        <option value="line">Line Chart</option>
+                        <option value="pie">Pie Chart</option>
+                      </select>
+                    </div>
+                    
+                    <div className="border border-gray-200 rounded-md overflow-hidden">
+                      <div className="bg-gray-50 px-2 py-1 flex justify-between items-center border-b border-gray-200">
+                        <span className="text-xs font-medium text-gray-600">Data Points</span>
+                        <button 
+                          onClick={() => {
+                            const current = selectedElement.chartData || [];
+                            updateElement(selectedElement.id, { chartData: [...current, { name: `Item ${current.length + 1}`, value: 100 }] });
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 p-1"
+                        ><Plus size={14}/></button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto p-2 flex flex-col gap-2">
+                        {(selectedElement.chartData || []).map((row: any, i: number) => (
+                          <div key={i} className="flex gap-1 items-center">
+                            <input type="text" value={row.name} onChange={(e) => {
+                              const newData = [...(selectedElement.chartData || [])];
+                              newData[i].name = e.target.value;
+                              updateElement(selectedElement.id, { chartData: newData });
+                            }} className="text-xs border border-gray-200 rounded px-1.5 py-1 w-16 focus:ring-1 focus:ring-indigo-500" />
+                            <input type="number" value={row.value} onChange={(e) => {
+                              const newData = [...(selectedElement.chartData || [])];
+                              newData[i].value = parseInt(e.target.value) || 0;
+                              updateElement(selectedElement.id, { chartData: newData });
+                            }} className="text-xs border border-gray-200 rounded px-1.5 py-1 w-16 focus:ring-1 focus:ring-indigo-500" />
+                            <button onClick={() => {
+                              const newData = [...(selectedElement.chartData || [])];
+                              newData.splice(i, 1);
+                              updateElement(selectedElement.id, { chartData: newData });
+                            }} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={12}/></button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* LAYOUT SECTION */}
-              <section>
+              <section className={['embed', 'chart'].includes(selectedElement.type) ? "border-t border-gray-100 pt-5" : ""}>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Layout & Position</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -214,7 +305,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                     <input type="number" value={Math.round(selectedElement.y)} onChange={(e) => updateElement(selectedElement.id, { y: parseInt(e.target.value) })} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
                   </div>
                   
-                  {['rect', 'circle', 'text', 'image'].includes(selectedElement.type) && (
+                  {['rect', 'circle', 'text', 'image', 'embed', 'chart'].includes(selectedElement.type) && (
                     <>
                       <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-500">Width</label>
@@ -225,7 +316,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                       </div>
                     </>
                   )}
-                  {selectedElement.type !== 'text' && selectedElement.type !== 'image' && (
+                  {selectedElement.type !== 'text' && selectedElement.type !== 'image' && selectedElement.type !== 'embed' && selectedElement.type !== 'chart' && (
                     <div className="flex flex-col gap-1">
                       <label className="text-xs text-gray-500">Rotation</label>
                       <input type="number" value={Math.round(selectedElement.rotation || 0)} onChange={(e) => updateElement(selectedElement.id, { rotation: parseInt(e.target.value) })} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
@@ -245,7 +336,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                     <input type="range" min="0" max="100" value={(selectedElement.opacity ?? 1) * 100} onChange={(e) => updateElement(selectedElement.id, { opacity: parseInt(e.target.value)/100 })} className="w-full accent-gray-900" />
                   </div>
                   
-                  {selectedElement.type !== 'image' && selectedElement.type !== 'line' && selectedElement.type !== 'arrow' && (
+                  {selectedElement.type !== 'image' && selectedElement.type !== 'line' && selectedElement.type !== 'arrow' && selectedElement.type !== 'embed' && selectedElement.type !== 'chart' && (
                     <>
                       {renderColorPicker('Fill Color', 'fill')}
                     </>

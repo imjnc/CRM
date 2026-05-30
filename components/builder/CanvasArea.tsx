@@ -1,10 +1,12 @@
 "use client";
 
-import { Stage, Layer, Rect, Circle, Text, Image as KonvaImage, Transformer, Star, RegularPolygon, Line, Arrow, Path } from "react-konva";
+import { Stage, Layer, Rect, Circle, Text, Image as KonvaImage, Transformer, Star, RegularPolygon, Line, Arrow, Path, Group } from "react-konva";
+import { Html } from "react-konva-utils";
 import { useEffect, useState, useRef } from "react";
 import useImage from "use-image";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
 import { Copy, ClipboardPaste, CopyPlus, Trash2, ArrowUpToLine, ArrowDownToLine, AlignLeft, AlignCenter, AlignRight, AlignVerticalSpaceAround, AlignVerticalSpaceBetween, AlignHorizontalSpaceAround } from "lucide-react";
+import { BarChart, Bar, LineChart, Line as RechartsLine, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 const URLImage = ({ image, ...props }: any) => {
   const [img] = useImage(image.src);
@@ -12,6 +14,46 @@ const URLImage = ({ image, ...props }: any) => {
 };
 
 const HEART_PATH = "M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z";
+const PIE_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1'];
+
+const ChartRenderer = ({ type, data }: { type: string, data: any[] }) => {
+  if (type === 'line') {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" tick={{fontSize: 12}} />
+          <YAxis tick={{fontSize: 12}} />
+          <Tooltip />
+          <RechartsLine type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (type === 'pie') {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Tooltip />
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+            {data.map((entry, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" tick={{fontSize: 12}} />
+        <YAxis tick={{fontSize: 12}} />
+        <Tooltip />
+        <Bar dataKey="value" fill="#3b82f6" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
 export default function CanvasArea() {
   const [mounted, setMounted] = useState(false);
@@ -63,7 +105,6 @@ export default function CanvasArea() {
       const activeTag = document.activeElement?.tagName.toUpperCase();
       const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
 
-      // Shortcuts (only if not typing in an input)
       if (!isInput) {
         if (e.key.toLowerCase() === 'r') {
           addElement({ type: 'rect', x: 100, y: 100, width: 100, height: 100, fill: '#3b82f6' });
@@ -79,7 +120,6 @@ export default function CanvasArea() {
         }
       }
 
-      // Undo / Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         if (e.shiftKey) {
           e.preventDefault();
@@ -94,7 +134,6 @@ export default function CanvasArea() {
         redo();
       }
 
-      // Copy / Paste
       if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !isInput) {
         copyElement();
       }
@@ -102,7 +141,6 @@ export default function CanvasArea() {
         pasteElement();
       }
 
-      // Delete / Duplicate
       if (!selectedId || isInput) return;
       if (e.key === 'Backspace' || e.key === 'Delete') {
         removeElement(selectedId);
@@ -125,11 +163,17 @@ export default function CanvasArea() {
     }
     
     // Select the element being right-clicked
-    if (e.target.id()) {
-      selectElement(e.target.id());
+    // For groups, we might click a child (like the drag handle rect)
+    const targetNode = e.target;
+    let elementId = targetNode.id();
+    if (!elementId && targetNode.parent?.id()) {
+      elementId = targetNode.parent.id();
+    }
+    
+    if (elementId) {
+      selectElement(elementId);
     }
 
-    // Get position relative to container
     if (containerRef.current) {
       const stageBox = containerRef.current.getBoundingClientRect();
       setContextMenu({
@@ -177,6 +221,15 @@ export default function CanvasArea() {
         onMouseDown={(e) => {
           if (e.target === e.target.getStage() || e.target.id() === 'bg') {
             selectElement(null);
+          } else {
+            const targetNode = e.target;
+            let elementId = targetNode.id();
+            if (!elementId && targetNode.parent?.id()) {
+              elementId = targetNode.parent.id();
+            }
+            if (elementId) {
+              selectElement(elementId);
+            }
           }
         }}
       >
@@ -198,16 +251,11 @@ export default function CanvasArea() {
               opacity: el.opacity ?? 1,
               rotation: el.rotation ?? 0,
               draggable: true,
-              onClick: () => selectElement(el.id),
-              onTap: () => selectElement(el.id),
               onDragEnd: (e: any) => {
                 updateElement(el.id, { x: e.target.x(), y: e.target.y() });
               },
               onTransformEnd: (e: any) => {
                 const node = e.target;
-                
-                // For lines and paths, it's safer to store scale directly
-                // For other shapes, we map scale to width/height/radius
                 const updates: any = {
                   x: node.x(),
                   y: node.y(),
@@ -251,6 +299,49 @@ export default function CanvasArea() {
               />
             );
             if (el.type === 'image') return <URLImage image={el} {...commonProps} width={el.width} height={el.height} />;
+            
+            if (el.type === 'embed' || el.type === 'chart') {
+              const width = el.width || 300;
+              const height = el.height || 200;
+              const headerHeight = 24;
+              
+              return (
+                <Group {...commonProps} width={width} height={height}>
+                  {/* Drag Handle */}
+                  <Rect width={width} height={headerHeight} fill="#f3f4f6" cornerRadius={[4, 4, 0, 0]} stroke="#e5e7eb" strokeWidth={1} />
+                  <Text text={el.type.toUpperCase() + " (DRAG HERE)"} x={8} y={7} fontSize={10} fill="#6b7280" fontStyle="bold" />
+                  
+                  {/* HTML Overlay */}
+                  <Html divProps={{ style: { 
+                    width: width, 
+                    height: height - headerHeight, 
+                    position: 'absolute',
+                    top: headerHeight,
+                    pointerEvents: selectedId === el.id ? 'auto' : 'none',
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderTop: 'none',
+                    borderRadius: '0 0 4px 4px',
+                    overflow: 'hidden'
+                  }}}>
+                    {el.type === 'embed' && (
+                      <iframe 
+                        src={el.embedUrl} 
+                        style={{ width: '100%', height: '100%', border: 'none' }}
+                        allowFullScreen 
+                        title="Embed" 
+                      />
+                    )}
+                    {el.type === 'chart' && (
+                      <div className="w-full h-full p-2 pt-4">
+                        <ChartRenderer type={el.chartType || 'bar'} data={el.chartData || []} />
+                      </div>
+                    )}
+                  </Html>
+                </Group>
+              );
+            }
+            
             return null;
           })}
           
