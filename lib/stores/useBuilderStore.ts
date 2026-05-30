@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export type CanvasElement = {
   id: string;
-  type: 'rect' | 'circle' | 'text' | 'image';
+  type: 'rect' | 'circle' | 'text' | 'image' | 'star' | 'polygon' | 'line' | 'arrow' | 'heart';
   x: number;
   y: number;
   width?: number;
@@ -12,6 +12,15 @@ export type CanvasElement = {
   text?: string;
   fontSize?: number;
   src?: string;
+  
+  // Advanced Elements Data
+  points?: number[];
+  sides?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  dash?: number[];
+  scaleX?: number;
+  scaleY?: number;
   
   // Advanced Properties
   fontFamily?: string;

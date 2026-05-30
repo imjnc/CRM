@@ -1,13 +1,13 @@
 "use client";
 
-import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
+import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Star, Heart, Minus, MoveRight, Hexagon, Triangle } from "lucide-react";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 
 const BRAND_COLORS = [
-  '#111827', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1'
+  '#111827', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', 'transparent'
 ];
 
 const FONTS = ['Arial', 'Inter', 'Roboto', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia'];
@@ -89,14 +89,36 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
     updateElement(selectedElement.id, { fontStyle: newStyle || 'normal' });
   };
 
+  const renderColorPicker = (label: string, field: 'fill' | 'stroke') => {
+    if (!selectedElement) return null;
+    const value = selectedElement[field] || (field === 'fill' ? '#000000' : 'transparent');
+    
+    return (
+      <div className="flex flex-col gap-1.5 mt-2">
+        <label className="text-xs font-medium text-gray-700">{label}</label>
+        <div className="flex items-center gap-2">
+          <input type="color" value={value === 'transparent' ? '#ffffff' : value} onChange={(e) => updateElement(selectedElement.id, { [field]: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-0 p-0" />
+          <span className="text-sm text-gray-600 font-mono uppercase">{value}</span>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {BRAND_COLORS.map(color => (
+            <button key={color} onClick={() => updateElement(selectedElement.id, { [field]: color })} className="w-5 h-5 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110 flex items-center justify-center relative overflow-hidden" title={color}>
+              {color === 'transparent' ? <div className="absolute inset-0 bg-white" style={{ backgroundImage: 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)', backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }} /> : <div className="absolute inset-0" style={{ backgroundColor: color }} />}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans">
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
         <div className="flex items-center gap-4">
           <h1 className="font-semibold text-gray-900">Design Builder</h1>
           <div className="flex gap-2 ml-4 border-l border-gray-200 pl-4">
-            <button onClick={undo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100"><Undo size={18} /></button>
-            <button onClick={redo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100"><Redo size={18} /></button>
+            <button onClick={undo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100" title="Undo (Ctrl+Z)"><Undo size={18} /></button>
+            <button onClick={redo} className="p-1.5 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100" title="Redo (Ctrl+Y)"><Redo size={18} /></button>
           </div>
         </div>
         <div className="flex gap-2">
@@ -119,20 +141,44 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
           )}
 
           <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Add Elements</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Text & Media</h2>
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => addElement({ type: 'text', x: 50, y: 50, text: 'Heading', fontSize: 32, fill: '#111827', fontFamily: 'Inter' })} className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50">
                 <Type size={20} className="text-gray-600" /><span className="text-xs font-medium text-gray-700">Text</span>
               </button>
-              <button onClick={() => addElement({ type: 'rect', x: 100, y: 100, width: 100, height: 100, fill: '#3b82f6' })} className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50">
-                <Square size={20} className="text-gray-600" /><span className="text-xs font-medium text-gray-700">Rectangle</span>
-              </button>
-              <button onClick={() => addElement({ type: 'circle', x: 150, y: 150, radius: 50, fill: '#ef4444' })} className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50">
-                <CircleIcon size={20} className="text-gray-600" /><span className="text-xs font-medium text-gray-700">Circle</span>
-              </button>
               <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50">
                 <ImageIcon size={20} className="text-gray-600" /><span className="text-xs font-medium text-gray-700">Image</span>
                 <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Lines & Shapes</h2>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => addElement({ type: 'line', x: 50, y: 50, points: [0, 0, 150, 0], stroke: '#111827', strokeWidth: 4 })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50" title="Line (L)">
+                <Minus size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Line</span>
+              </button>
+              <button onClick={() => addElement({ type: 'arrow', x: 50, y: 50, points: [0, 0, 150, 0], stroke: '#111827', strokeWidth: 4 })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50">
+                <MoveRight size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Arrow</span>
+              </button>
+              <button onClick={() => addElement({ type: 'rect', x: 100, y: 100, width: 100, height: 100, fill: '#3b82f6', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50" title="Rectangle (R)">
+                <Square size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Rect</span>
+              </button>
+              <button onClick={() => addElement({ type: 'circle', x: 150, y: 150, radius: 50, fill: '#ef4444', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50" title="Circle (C)">
+                <CircleIcon size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Circle</span>
+              </button>
+              <button onClick={() => addElement({ type: 'polygon', x: 150, y: 150, radius: 50, sides: 3, fill: '#10b981', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50">
+                <Triangle size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Triangle</span>
+              </button>
+              <button onClick={() => addElement({ type: 'star', x: 150, y: 150, radius: 60, sides: 5, fill: '#f59e0b', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50">
+                <Star size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Star</span>
+              </button>
+              <button onClick={() => addElement({ type: 'heart', x: 100, y: 100, scaleX: 1, scaleY: 1, fill: '#ef4444', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50">
+                <Heart size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Heart</span>
+              </button>
+              <button onClick={() => addElement({ type: 'polygon', x: 150, y: 150, radius: 50, sides: 6, fill: '#6366f1', strokeWidth: 0, stroke: 'transparent' })} className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-2 hover:bg-gray-50">
+                <Hexagon size={20} className="text-gray-600" /><span className="text-[10px] font-medium text-gray-700">Hexagon</span>
               </button>
             </div>
           </section>
@@ -168,7 +214,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                     <input type="number" value={Math.round(selectedElement.y)} onChange={(e) => updateElement(selectedElement.id, { y: parseInt(e.target.value) })} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
                   </div>
                   
-                  {selectedElement.type !== 'text' && (
+                  {['rect', 'circle', 'text', 'image'].includes(selectedElement.type) && (
                     <>
                       <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-500">Width</label>
@@ -177,11 +223,13 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                           else updateElement(selectedElement.id, { width: parseInt(e.target.value) });
                         }} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs text-gray-500">Rotation</label>
-                        <input type="number" value={Math.round(selectedElement.rotation || 0)} onChange={(e) => updateElement(selectedElement.id, { rotation: parseInt(e.target.value) })} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
-                      </div>
                     </>
+                  )}
+                  {selectedElement.type !== 'text' && selectedElement.type !== 'image' && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-gray-500">Rotation</label>
+                      <input type="number" value={Math.round(selectedElement.rotation || 0)} onChange={(e) => updateElement(selectedElement.id, { rotation: parseInt(e.target.value) })} className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-gray-900" />
+                    </div>
                   )}
                 </div>
               </section>
@@ -197,18 +245,35 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                     <input type="range" min="0" max="100" value={(selectedElement.opacity ?? 1) * 100} onChange={(e) => updateElement(selectedElement.id, { opacity: parseInt(e.target.value)/100 })} className="w-full accent-gray-900" />
                   </div>
                   
-                  {['rect', 'circle', 'text'].includes(selectedElement.type) && (
-                    <div className="flex flex-col gap-1.5 mt-2">
-                      <label className="text-xs font-medium text-gray-700">Fill Color</label>
-                      <div className="flex items-center gap-2">
-                        <input type="color" value={selectedElement.fill || '#000000'} onChange={(e) => updateElement(selectedElement.id, { fill: e.target.value })} className="h-8 w-8 rounded cursor-pointer border-0 p-0" />
-                        <span className="text-sm text-gray-600 font-mono uppercase">{selectedElement.fill || '#000000'}</span>
+                  {selectedElement.type !== 'image' && selectedElement.type !== 'line' && selectedElement.type !== 'arrow' && (
+                    <>
+                      {renderColorPicker('Fill Color', 'fill')}
+                    </>
+                  )}
+                  
+                  {['rect', 'circle', 'star', 'polygon', 'heart', 'line', 'arrow'].includes(selectedElement.type) && (
+                    <div className="mt-2 space-y-4">
+                      {renderColorPicker('Stroke Color', 'stroke')}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-700 flex justify-between">
+                          Stroke Width <span>{selectedElement.strokeWidth || 0}px</span>
+                        </label>
+                        <input type="range" min="0" max="20" value={selectedElement.strokeWidth || 0} onChange={(e) => updateElement(selectedElement.id, { strokeWidth: parseInt(e.target.value) })} className="w-full accent-gray-900" />
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {BRAND_COLORS.map(color => (
-                          <button key={color} onClick={() => updateElement(selectedElement.id, { fill: color })} className="w-5 h-5 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110" style={{ backgroundColor: color }} title={color} />
-                        ))}
-                      </div>
+                      
+                      {['line', 'arrow'].includes(selectedElement.type) && (
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-medium text-gray-700">Line Style</label>
+                          <select 
+                            value={selectedElement.dash ? 'dashed' : 'solid'} 
+                            onChange={(e) => updateElement(selectedElement.id, { dash: e.target.value === 'dashed' ? [10, 10] : undefined })}
+                            className="text-sm border border-gray-200 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-gray-900"
+                          >
+                            <option value="solid">Solid</option>
+                            <option value="dashed">Dashed</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

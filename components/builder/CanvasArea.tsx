@@ -1,6 +1,6 @@
 "use client";
 
-import { Stage, Layer, Rect, Circle, Text, Image as KonvaImage, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Circle, Text, Image as KonvaImage, Transformer, Star, RegularPolygon, Line, Arrow, Path } from "react-konva";
 import { useEffect, useState, useRef } from "react";
 import useImage from "use-image";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
@@ -10,6 +10,8 @@ const URLImage = ({ image, ...props }: any) => {
   const [img] = useImage(image.src);
   return <KonvaImage image={img} {...props} />;
 };
+
+const HEART_PATH = "M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z";
 
 export default function CanvasArea() {
   const [mounted, setMounted] = useState(false);
@@ -28,7 +30,8 @@ export default function CanvasArea() {
     copyElement,
     pasteElement,
     bringToFront,
-    sendToBack
+    sendToBack,
+    addElement
   } = useBuilderStore();
   
   const trRef = useRef<any>(null);
@@ -57,6 +60,25 @@ export default function CanvasArea() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toUpperCase();
+      const isInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+      // Shortcuts (only if not typing in an input)
+      if (!isInput) {
+        if (e.key.toLowerCase() === 'r') {
+          addElement({ type: 'rect', x: 100, y: 100, width: 100, height: 100, fill: '#3b82f6' });
+          return;
+        }
+        if (e.key.toLowerCase() === 'c') {
+          addElement({ type: 'circle', x: 150, y: 150, radius: 50, fill: '#ef4444' });
+          return;
+        }
+        if (e.key.toLowerCase() === 'l') {
+          addElement({ type: 'line', x: 100, y: 100, points: [0, 0, 200, 0], stroke: '#111827', strokeWidth: 4 });
+          return;
+        }
+      }
+
       // Undo / Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         if (e.shiftKey) {
@@ -73,15 +95,15 @@ export default function CanvasArea() {
       }
 
       // Copy / Paste
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !isInput) {
         copyElement();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !isInput) {
         pasteElement();
       }
 
       // Delete / Duplicate
-      if (!selectedId) return;
+      if (!selectedId || isInput) return;
       if (e.key === 'Backspace' || e.key === 'Delete') {
         removeElement(selectedId);
       }
@@ -93,7 +115,7 @@ export default function CanvasArea() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, removeElement, duplicateElement, undo, redo, copyElement, pasteElement]);
+  }, [selectedId, removeElement, duplicateElement, undo, redo, copyElement, pasteElement, addElement]);
 
   const handleContextMenu = (e: any) => {
     e.evt.preventDefault();
@@ -168,6 +190,11 @@ export default function CanvasArea() {
               x: el.x,
               y: el.y,
               fill: el.fill,
+              stroke: el.stroke,
+              strokeWidth: el.strokeWidth,
+              dash: el.dash,
+              scaleX: el.scaleX ?? 1,
+              scaleY: el.scaleY ?? 1,
               opacity: el.opacity ?? 1,
               rotation: el.rotation ?? 0,
               draggable: true,
@@ -178,21 +205,38 @@ export default function CanvasArea() {
               },
               onTransformEnd: (e: any) => {
                 const node = e.target;
-                updateElement(el.id, {
+                
+                // For lines and paths, it's safer to store scale directly
+                // For other shapes, we map scale to width/height/radius
+                const updates: any = {
                   x: node.x(),
                   y: node.y(),
                   rotation: node.rotation(),
-                  width: el.type !== 'circle' ? node.width() * node.scaleX() : undefined,
-                  height: el.type !== 'circle' ? node.height() * node.scaleY() : undefined,
-                  radius: el.type === 'circle' ? node.radius() * node.scaleX() : undefined,
-                });
-                node.scaleX(1);
-                node.scaleY(1);
+                };
+
+                if (['line', 'arrow', 'heart'].includes(el.type)) {
+                  updates.scaleX = node.scaleX();
+                  updates.scaleY = node.scaleY();
+                } else {
+                  updates.width = el.type !== 'circle' ? node.width() * node.scaleX() : undefined;
+                  updates.height = el.type !== 'circle' ? node.height() * node.scaleY() : undefined;
+                  updates.radius = el.type === 'circle' ? node.radius() * node.scaleX() : undefined;
+                  node.scaleX(1);
+                  node.scaleY(1);
+                }
+                
+                updateElement(el.id, updates);
               }
             };
 
             if (el.type === 'rect') return <Rect {...commonProps} width={el.width} height={el.height} />;
             if (el.type === 'circle') return <Circle {...commonProps} radius={el.radius} />;
+            if (el.type === 'star') return <Star {...commonProps} numPoints={el.sides || 5} innerRadius={(el.radius || 50) / 2} outerRadius={el.radius || 50} />;
+            if (el.type === 'polygon') return <RegularPolygon {...commonProps} sides={el.sides || 3} radius={el.radius || 50} />;
+            if (el.type === 'line') return <Line {...commonProps} points={el.points || [0, 0, 100, 0]} />;
+            if (el.type === 'arrow') return <Arrow {...commonProps} points={el.points || [0, 0, 100, 0]} pointerLength={10} pointerWidth={10} />;
+            if (el.type === 'heart') return <Path {...commonProps} data={HEART_PATH} scaleX={(el.scaleX ?? 1) * 3} scaleY={(el.scaleY ?? 1) * 3} />;
+            
             if (el.type === 'text') return (
               <Text 
                 {...commonProps} 
