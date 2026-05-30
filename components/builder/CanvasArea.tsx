@@ -1,8 +1,14 @@
 "use client";
 
-import { Stage, Layer, Rect, Circle, Text, Transformer } from "react-konva";
+import { Stage, Layer, Rect, Circle, Text, Image as KonvaImage, Transformer } from "react-konva";
 import { useEffect, useState, useRef } from "react";
+import useImage from "use-image";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
+
+const URLImage = ({ image, ...props }: any) => {
+  const [img] = useImage(image.src);
+  return <KonvaImage image={img} {...props} />;
+};
 
 export default function CanvasArea() {
   const [mounted, setMounted] = useState(false);
@@ -70,6 +76,7 @@ export default function CanvasArea() {
           if (el.type === 'rect') return <Rect {...commonProps} width={el.width} height={el.height} />;
           if (el.type === 'circle') return <Circle {...commonProps} radius={el.radius} />;
           if (el.type === 'text') return <Text {...commonProps} text={el.text} fontSize={el.fontSize} />;
+          if (el.type === 'image') return <URLImage image={el} {...commonProps} width={el.width} height={el.height} />;
           return null;
         })}
         

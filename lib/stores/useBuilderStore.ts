@@ -2,15 +2,16 @@ import { create } from 'zustand';
 
 export type CanvasElement = {
   id: string;
-  type: 'rect' | 'circle' | 'text';
+  type: 'rect' | 'circle' | 'text' | 'image';
   x: number;
   y: number;
   width?: number;
   height?: number;
   radius?: number;
-  fill: string;
+  fill?: string;
   text?: string;
   fontSize?: number;
+  src?: string;
 };
 
 interface BuilderState {
