@@ -12,7 +12,7 @@ const URLImage = ({ image, ...props }: any) => {
 
 export default function CanvasArea() {
   const [mounted, setMounted] = useState(false);
-  const { elements, selectedId, selectElement, updateElement } = useBuilderStore();
+  const { elements, selectedId, selectElement, updateElement, removeElement, duplicateElement } = useBuilderStore();
   const trRef = useRef<any>(null);
   const stageRef = useRef<any>(null);
 
@@ -29,6 +29,24 @@ export default function CanvasArea() {
       }
     }
   }, [selectedId, elements]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedId) return;
+
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        removeElement(selectedId);
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        duplicateElement(selectedId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedId, removeElement, duplicateElement]);
 
   if (!mounted) return null;
 

@@ -20,6 +20,8 @@ interface BuilderState {
   addElement: (element: Omit<CanvasElement, 'id'>) => void;
   updateElement: (id: string, attrs: Partial<CanvasElement>) => void;
   selectElement: (id: string | null) => void;
+  removeElement: (id: string) => void;
+  duplicateElement: (id: string) => void;
 }
 
 export const useBuilderStore = create<BuilderState>((set) => ({
@@ -31,5 +33,25 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   updateElement: (id, attrs) => set((state) => ({
     elements: state.elements.map((el) => el.id === id ? { ...el, ...attrs } : el)
   })),
-  selectElement: (id) => set({ selectedId: id })
+  selectElement: (id) => set({ selectedId: id }),
+  removeElement: (id) => set((state) => ({
+    elements: state.elements.filter((el) => el.id !== id),
+    selectedId: state.selectedId === id ? null : state.selectedId
+  })),
+  duplicateElement: (id) => set((state) => {
+    const elToDuplicate = state.elements.find((el) => el.id === id);
+    if (!elToDuplicate) return state;
+    
+    const newElement = { 
+      ...elToDuplicate, 
+      id: Date.now().toString(),
+      x: elToDuplicate.x + 20, 
+      y: elToDuplicate.y + 20 
+    };
+    
+    return {
+      elements: [...state.elements, newElement],
+      selectedId: newElement.id
+    };
+  })
 }));

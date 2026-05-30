@@ -5,10 +5,21 @@ import { useBuilderStore } from "@/lib/stores/useBuilderStore";
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
 
+const BRAND_COLORS = [
+  '#111827', // Slate 900
+  '#3b82f6', // Blue 500
+  '#ef4444', // Red 500
+  '#10b981', // Emerald 500
+  '#f59e0b', // Amber 500
+  '#6366f1', // Indigo 500
+];
+
 export default function BuilderLayout({ children }: { children: React.ReactNode }) {
-  const addElement = useBuilderStore((state) => state.addElement);
+  const { addElement, elements, selectedId, updateElement } = useBuilderStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [qrText, setQrText] = useState("");
+
+  const selectedElement = elements.find(el => el.id === selectedId);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,7 +37,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
       };
       reader.readAsDataURL(file);
     }
-    // reset input so same file can be uploaded again if deleted
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -64,7 +74,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6">
           
-          {/* Elements Section */}
           <section>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Add Elements</h2>
             <div className="grid grid-cols-2 gap-2">
@@ -107,7 +116,6 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
             </div>
           </section>
 
-          {/* QR Generator Section */}
           <section>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5">
               <QrCode size={14} />
@@ -137,9 +145,84 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
           {children}
         </main>
         
-        <aside className="w-64 border-l border-gray-200 bg-white p-4 overflow-y-auto">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Properties</h2>
-          <div className="text-sm text-gray-400 italic">Select an element to edit properties</div>
+        <aside className="w-72 border-l border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6">
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Properties</h2>
+            
+            {!selectedElement ? (
+              <div className="text-sm text-gray-400 italic">Select an element to edit properties</div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                
+                {/* Text Properties */}
+                {selectedElement.type === 'text' && (
+                  <>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-gray-700">Text Content</label>
+                      <input 
+                        type="text" 
+                        value={selectedElement.text || ''} 
+                        onChange={(e) => updateElement(selectedElement.id, { text: e.target.value })}
+                        className="text-sm border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-gray-700">Font Size</label>
+                      <input 
+                        type="number" 
+                        value={selectedElement.fontSize || 32} 
+                        onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) })}
+                        className="text-sm border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Fill Color Property (Shapes & Text) */}
+                {['rect', 'circle', 'text'].includes(selectedElement.type) && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-gray-700">Color</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="color" 
+                        value={selectedElement.fill || '#000000'} 
+                        onChange={(e) => updateElement(selectedElement.id, { fill: e.target.value })}
+                        className="h-8 w-8 rounded cursor-pointer border-0 p-0"
+                      />
+                      <span className="text-sm text-gray-600 font-mono uppercase">
+                        {selectedElement.fill || '#000000'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Brand Kit Section */}
+                {['rect', 'circle', 'text'].includes(selectedElement.type) && (
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    <label className="text-xs font-medium text-gray-700 block mb-2">Brand Colors</label>
+                    <div className="flex flex-wrap gap-2">
+                      {BRAND_COLORS.map(color => (
+                        <button
+                          key={color}
+                          onClick={() => updateElement(selectedElement.id, { fill: color })}
+                          className="w-6 h-6 rounded-full border border-gray-200 shadow-sm transition-transform hover:scale-110"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {selectedElement.type === 'image' && (
+                  <div className="text-sm text-gray-500">
+                    Resize this image using the corner handles on the canvas.
+                  </div>
+                )}
+
+              </div>
+            )}
+          </section>
         </aside>
       </div>
     </div>
