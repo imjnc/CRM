@@ -1,4 +1,11 @@
+"use client";
+
+import { Type, Square, Circle as CircleIcon } from "lucide-react";
+import { useBuilderStore } from "@/lib/stores/useBuilderStore";
+
 export default function BuilderLayout({ children }: { children: React.ReactNode }) {
+  const addElement = useBuilderStore((state) => state.addElement);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans">
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4">
@@ -12,8 +19,30 @@ export default function BuilderLayout({ children }: { children: React.ReactNode 
       </header>
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Layers & Elements</h2>
-          <div className="text-sm text-gray-400 italic">Coming soon...</div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Add Elements</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={() => addElement({ type: 'text', x: 50, y: 50, text: 'Heading', fontSize: 32, fill: '#111827' })}
+              className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50"
+            >
+              <Type size={20} className="text-gray-600" />
+              <span className="text-xs font-medium text-gray-700">Text</span>
+            </button>
+            <button 
+              onClick={() => addElement({ type: 'rect', x: 100, y: 100, width: 100, height: 100, fill: '#3b82f6' })}
+              className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50"
+            >
+              <Square size={20} className="text-gray-600" />
+              <span className="text-xs font-medium text-gray-700">Rectangle</span>
+            </button>
+            <button 
+              onClick={() => addElement({ type: 'circle', x: 150, y: 150, radius: 50, fill: '#ef4444' })}
+              className="flex flex-col items-center justify-center gap-2 rounded-md border border-gray-200 p-3 hover:bg-gray-50"
+            >
+              <CircleIcon size={20} className="text-gray-600" />
+              <span className="text-xs font-medium text-gray-700">Circle</span>
+            </button>
+          </div>
         </aside>
         
         <main className="flex-1 overflow-auto p-8 flex flex-col items-center">
