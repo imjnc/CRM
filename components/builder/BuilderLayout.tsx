@@ -157,7 +157,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6 scrollbar-hide shadow-sm z-10">
+        <aside className="shrink-0 w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6 scrollbar-hide shadow-sm z-10">
           {lead && (
             <section className="bg-gray-50 -mx-4 -mt-4 p-4 border-b border-gray-100 mb-2">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-800 mb-3 flex items-center gap-1.5"><Database size={14} /> CRM Context</h2>
@@ -240,7 +240,7 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
           </div>
         </main>
         
-        <aside className="w-80 border-l border-gray-200 bg-white p-5 overflow-y-auto flex flex-col gap-6 shadow-sm z-10">
+        <aside className="shrink-0 w-80 border-l border-gray-200 bg-white p-5 overflow-y-auto flex flex-col gap-6 shadow-sm z-10">
           {!selectedElement ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3">
                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center">
