@@ -195,7 +195,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
         <h3 className="text-[14px] font-semibold text-slate-900">Emails</h3>
         <button
           onClick={openCompose}
-          className="flex items-center gap-1 bg-violet-600 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-violet-700"
+          className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
           <Plus size={12} /> New Email
         </button>
@@ -225,7 +225,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                     className={cn(
                       "flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-md border transition-colors",
                       showTemplates
-                        ? "border-violet-300 bg-violet-50 text-violet-700"
+                        ? "border-gray-300 bg-gray-50 text-gray-900"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
                     )}
                   >
@@ -261,7 +261,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                     value={form.toEmail}
                     onChange={(e) => setForm(p => ({ ...p, toEmail: e.target.value }))}
                     placeholder="recipient@example.com"
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
                   />
                 </div>
 
@@ -272,7 +272,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                     value={form.subject}
                     onChange={(e) => setForm(p => ({ ...p, subject: e.target.value }))}
                     placeholder="Enter subject..."
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
                   />
                 </div>
 
@@ -281,7 +281,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                   <div className="flex items-center justify-between mb-0.5">
                     <label className="text-[11px] text-slate-500 font-medium">Body</label>
                     {form.body && (
-                      <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] text-gray-900 bg-gray-50 px-1.5 py-0.5 rounded">
                         Replace [brackets] with real details
                       </span>
                     )}
@@ -291,7 +291,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                     onChange={(e) => setForm(p => ({ ...p, body: e.target.value }))}
                     rows={14}
                     placeholder="Write your email here, or pick a template above..."
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400 resize-none font-mono leading-relaxed"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900 resize-none font-mono leading-relaxed"
                   />
                 </div>
               </div>
@@ -308,7 +308,7 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                 <button
                   type="submit"
                   disabled={sending || !form.subject.trim() || !form.body.trim()}
-                  className="text-[13px] px-4 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                  className="text-[13px] px-4 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
                 >
                   {sending ? "Sending..." : "Send Email"}
                 </button>
@@ -338,8 +338,8 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                 onClick={() => setExpandedId(expandedId === email.id ? null : email.id)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 text-left"
               >
-                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                  <Mail size={13} className="text-blue-500" />
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  <Mail size={13} className="text-gray-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-slate-900 truncate">{email.subject}</p>

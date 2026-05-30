@@ -104,7 +104,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                     value={form.duration}
                     onChange={(e) => setForm(p => ({ ...p, duration: e.target.value }))}
                     placeholder="e.g. 120"
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
                   />
                 </div>
                 <div>
@@ -113,7 +113,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                     value={form.fromNumber}
                     onChange={(e) => setForm(p => ({ ...p, fromNumber: e.target.value }))}
                     placeholder="+1 555 000 0000"
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
                   />
                 </div>
                 <div>
@@ -122,7 +122,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                     value={form.toNumber}
                     onChange={(e) => setForm(p => ({ ...p, toNumber: e.target.value }))}
                     placeholder="+1 555 000 0000"
-                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+                    className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
                   />
                 </div>
               </div>
@@ -133,7 +133,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                   onChange={(e) => setForm(p => ({ ...p, notes: e.target.value }))}
                   rows={4}
                   placeholder="What was discussed on this call..."
-                  className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400 resize-none"
+                  className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900 resize-none"
                 />
               </div>
               <div className="flex gap-2 justify-end pt-1">
@@ -147,7 +147,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                 <button
                   type="submit"
                   disabled={saving}
-                  className="text-[13px] px-4 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                  className="text-[13px] px-4 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
                 >
                   {saving ? "Saving..." : "Save Call"}
                 </button>
@@ -175,12 +175,12 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
               <div className="flex items-center gap-3">
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                    log.direction === "inbound" ? "bg-green-100" : "bg-blue-100"
+                    log.direction === "inbound" ? "bg-green-100" : "bg-gray-100"
                   }`}
                 >
                   {log.direction === "inbound"
                     ? <ArrowDownLeft size={13} className="text-green-600" />
-                    : <ArrowUpRight size={13} className="text-blue-600" />
+                    : <ArrowUpRight size={13} className="text-gray-900" />
                   }
                 </div>
                 <div className="flex-1 min-w-0">
@@ -197,7 +197,7 @@ export function CallsTab({ callLogs, leadId, leadMobile, onCallCreated }: CallsT
                     href={log.recordingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[12px] text-blue-500 hover:underline shrink-0"
+                    className="text-[12px] text-gray-600 hover:underline shrink-0"
                   >
                     Listen to Call
                   </a>

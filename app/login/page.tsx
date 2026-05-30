@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +33,7 @@ export default function LoginPage() {
       }
 
       // Sign in successful, redirect to leads
-      window.location.href = "/leads"
+      router.push("/leads")
     } catch (error) {
       // Handle error (next-auth will show error automatically)
       console.error("Login error:", error)
@@ -49,9 +52,9 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/register" className="ml-1 font-medium text-gray-900 hover:text-gray-600">
               register a new account
-            </a>
+            </Link>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -100,7 +103,7 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded"
               />
               <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                 Remember me
@@ -108,9 +111,9 @@ export default function LoginPage() {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href="#" className="font-medium text-gray-900 hover:text-gray-600">
                 Forgot password?
-              </a>
+              </Link>
             </div>
           </div>
 

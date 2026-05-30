@@ -8,7 +8,7 @@ export function PlaceholderPage({ title, description, icon: Icon }: { title: str
       <div className="flex flex-col h-full bg-slate-50">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600">
+            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-900">
               <Icon size={20} />
             </div>
             <div>
@@ -23,13 +23,13 @@ export function PlaceholderPage({ title, description, icon: Icon }: { title: str
               <input
                 type="text"
                 placeholder={`Search ${title.toLowerCase()}...`}
-                className="h-9 w-64 rounded-md border border-slate-200 pl-9 pr-4 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="h-9 w-64 rounded-md border border-slate-200 pl-9 pr-4 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
               />
             </div>
             <Button variant="outline" size="sm" className="h-9 text-slate-600">
               <Filter className="mr-2 h-4 w-4" /> Filter
             </Button>
-            <Button size="sm" className="h-9 bg-violet-600 hover:bg-violet-700">
+            <Button size="sm" className="h-9 bg-gray-900 hover:bg-gray-800">
               <Plus className="mr-2 h-4 w-4" /> New {title.replace(/s$/, '')}
             </Button>
           </div>
@@ -44,7 +44,7 @@ export function PlaceholderPage({ title, description, icon: Icon }: { title: str
             <p className="text-slate-500 text-sm mb-6">
               Get started by creating a new {title.toLowerCase().replace(/s$/, '')}. All your {title.toLowerCase()} will appear here in a beautiful, organized view.
             </p>
-            <Button className="bg-violet-600 hover:bg-violet-700">
+            <Button className="bg-gray-900 hover:bg-gray-800">
               <Plus className="mr-2 h-4 w-4" /> Create {title.replace(/s$/, '')}
             </Button>
           </div>

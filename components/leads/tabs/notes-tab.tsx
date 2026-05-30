@@ -48,7 +48,7 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
         <h3 className="text-[14px] font-semibold text-slate-900">Notes</h3>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1 bg-violet-600 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-violet-700"
+          className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
           <Plus size={12} /> New Note
         </button>
@@ -63,7 +63,7 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
               value={form.title}
               onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
               placeholder="Call with John Doe"
-              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
             />
           </div>
           <div>
@@ -73,14 +73,14 @@ export function NotesTab({ notes, leadId, onNoteCreated }: NotesTabProps) {
               onChange={(e) => setForm(p => ({ ...p, content: e.target.value }))}
               rows={4}
               placeholder="Took a call with John Doe and discussed the new project..."
-              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400 resize-none"
+              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900 resize-none"
             />
           </div>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => setShowForm(false)} className="text-[13px] px-3 py-1.5 rounded-md hover:bg-slate-200 text-slate-600">
               Cancel
             </button>
-            <button type="submit" disabled={saving || !form.title.trim()} className="text-[13px] px-4 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50">
+            <button type="submit" disabled={saving || !form.title.trim()} className="text-[13px] px-4 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
               {saving ? "Saving..." : "Create"}
             </button>
           </div>

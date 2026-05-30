@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useRef, useState } from "react"
 import { ChevronDown, Phone, Mail, Link, User } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -50,15 +50,12 @@ function InlineField({
 }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value ?? "")
-
-  // Sync internal state when value prop changes
-  useEffect(() => {
-    setVal(value ?? "")
-  }, [value])
+  const inputRef = useRef<HTMLInputElement>(null)
 
   function handleBlur() {
     setEditing(false)
-    if (val !== (value ?? "")) onSave(val)
+    const nextValue = inputRef.current?.value ?? val
+    if (nextValue !== (value ?? "")) onSave(nextValue)
   }
 
   return (
@@ -67,16 +64,22 @@ function InlineField({
       {editing ? (
         <input
           autoFocus
+          ref={inputRef}
           type={type}
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onBlur={handleBlur}
-          onKeyDown={(e) => { if (e.key === "Enter") handleBlur() }}
-          className="flex-1 text-[13px] text-slate-900 border border-slate-300 rounded px-1.5 py-0.5 outline-none focus:border-violet-400"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleBlur()
+          }}
+          className="flex-1 text-[13px] text-slate-900 border border-slate-300 rounded px-1.5 py-0.5 outline-none focus:border-gray-900"
         />
       ) : (
         <span
-          onClick={() => setEditing(true)}
+          onClick={() => {
+            setVal(value ?? "")
+            setEditing(true)
+          }}
           className={cn(
             "flex-1 text-[13px] cursor-pointer rounded px-1 py-0.5 hover:bg-slate-100 break-words overflow-hidden",
             value ? "text-slate-900" : "text-slate-400"
@@ -98,19 +101,13 @@ function SelectField({
   placeholder: string
   onSave: (val: string) => void
 }) {
-  const [open, setOpen ] = useState(false)
-  const [selectedValue, setSelectedValue] = useState(value ?? "")
-
-  // Sync internal state when value prop changes
-  useEffect(() => {
-    setSelectedValue(value ?? "")
-  }, [value])
+  const [open, setOpen] = useState(false)
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Enter") {
       e.preventDefault()
       if (open) {
-        onSave(selectedValue)
+        onSave(value ?? "")
         setOpen(false)
       }
     }
@@ -128,17 +125,20 @@ function SelectField({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex-1 text-[13px] cursor-pointer rounded px-1 py-0.5 hover:bg-slate-100",
-          selectedValue ? "text-slate-900" : "text-slate-400"
+          value ? "text-slate-900" : "text-slate-400"
         )}
       >
-        {selectedValue || placeholder}
+        {value || placeholder}
       </span>
       {open && (
         <div className="absolute left-28 top-7 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-44 py-1">
           {options.map((opt) => (
             <button
               key={opt}
-              onClick={() => { onSave(opt); setOpen(false) }}
+              onClick={() => {
+                onSave(opt)
+                setOpen(false)
+              }}
               className="w-full text-left text-[13px] px-3 py-1.5 hover:bg-slate-50 text-slate-700"
             >
               {opt}
@@ -256,7 +256,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
               <span className="w-28 text-[12px] text-slate-400 shrink-0">Lead Owner</span>
               <div className="flex items-center gap-1.5">
                 <Avatar className="w-5 h-5">
-                  <AvatarFallback className="bg-violet-100 text-violet-700 text-[10px]">
+                  <AvatarFallback className="bg-gray-100 text-gray-900 text-[10px]">
                     {lead.assignedTo?.name?.[0] ?? <User size={10} />}
                   </AvatarFallback>
                 </Avatar>
@@ -296,7 +296,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
             </div>
             <div className="flex items-center py-1.5">
               <span className="w-28 text-[12px] text-slate-400 shrink-0">Email</span>
-              <span className="text-[13px] text-violet-600">{lead.email ?? "—"}</span>
+              <span className="text-[13px] text-gray-900">{lead.email ?? "—"}</span>
             </div>
             <div className="flex items-center py-1.5">
               <span className="w-28 text-[12px] text-slate-400 shrink-0">Mobile No</span>

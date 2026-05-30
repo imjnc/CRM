@@ -7,10 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   created:       <User size={13} className="text-slate-500" />,
-  email:         <Mail size={13} className="text-blue-500" />,
+  email:         <Mail size={13} className="text-gray-600" />,
   call:          <Phone size={13} className="text-green-500" />,
   note:          <FileText size={13} className="text-yellow-500" />,
-  task:          <CheckSquare size={13} className="text-violet-600" />,
+  task:          <CheckSquare size={13} className="text-gray-900" />,
   status_change: <Star size={13} className="text-orange-500" />,
   field_edit:    <User size={13} className="text-slate-400" />,
   comment:       <MessageCircle size={13} className="text-slate-500" />,
@@ -62,7 +62,7 @@ export function ActivityTab({ activities, leadId, onActivityCreated }: ActivityT
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
-            className="flex items-center gap-1 bg-violet-600 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-violet-700"
+            className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
           >
             <Plus size={12} /> New
             <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +90,7 @@ export function ActivityTab({ activities, leadId, onActivityCreated }: ActivityT
             onChange={(e) => setComment(e.target.value)}
             rows={3}
             placeholder="Add a comment..."
-            className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400 resize-none bg-white"
+            className="w-full text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900 resize-none bg-white"
           />
           <div className="flex gap-2 justify-end mt-2">
             <button
@@ -103,7 +103,7 @@ export function ActivityTab({ activities, leadId, onActivityCreated }: ActivityT
             <button
               type="submit"
               disabled={saving || !comment.trim()}
-              className="text-[12px] px-3 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+              className="text-[12px] px-3 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {saving ? "Adding..." : "Comment"}
             </button>

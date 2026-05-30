@@ -12,7 +12,7 @@ import { NotesTab } from "@/components/leads/tabs/notes-tab"
 
 const STATUSES = ["New", "Nurture", "Qualified", "Deal", "Unqualified", "Junk"]
 const STATUS_DOT: Record<string, string> = {
-  New:         "bg-blue-500",
+  New:         "bg-gray-900",
   Nurture:     "bg-yellow-500",
   Qualified:   "bg-green-500",
   Deal:        "bg-emerald-500",
@@ -133,8 +133,8 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
               className={cn(
                 "inline-flex items-center rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                 lead.status === "Deal"
-                  ? "bg-violet-100 text-violet-700 cursor-default"
-                  : "bg-violet-600 text-white hover:bg-violet-700"
+                  ? "bg-gray-100 text-gray-900 cursor-default"
+                  : "bg-gray-900 text-white hover:bg-gray-800"
               )}
             >
               Convert to Deal
@@ -152,7 +152,7 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
             className={cn(
               "flex items-center gap-1.5 text-[13px] px-3 py-2.5 border-b-2 transition-colors",
               activeTab === id
-                ? "border-violet-600 text-violet-700 font-medium"
+                ? "border-gray-900 text-gray-900 font-medium"
                 : "border-transparent text-slate-500 hover:text-slate-700"
             )}
           >

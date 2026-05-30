@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { AppLayout } from "@/components/layout/app-layout"
 import { LeadDetailClient } from "./lead-detail-client"
 
+export const dynamic = "force-dynamic"
+
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 

@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function AuthErrorPage() {
   return (
     <div className="min-h-full flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -16,9 +18,9 @@ export default function AuthErrorPage() {
           Please try again or contact support if the problem persists.
         </div>
         <div className="mt-6 flex items-center justify-center">
-          <a href="/" className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+          <Link href="/" className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
             Go to Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </div>

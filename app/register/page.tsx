@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +12,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +29,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         // Registration successful, redirect to login
-        window.location.href = "/login"
+        router.push("/login")
       } else {
         const errorData = await response.json()
         alert(errorData.error || "Registration failed")
@@ -48,9 +51,9 @@ export default function RegisterPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Already have an account?
-            <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/login" className="ml-1 font-medium text-gray-900 hover:text-gray-600">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

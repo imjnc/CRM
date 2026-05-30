@@ -63,7 +63,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
         <h3 className="text-[14px] font-semibold text-slate-900">Tasks</h3>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1 bg-violet-600 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-violet-700"
+          className="flex items-center gap-1 bg-gray-900 text-white text-[12px] px-3 py-1.5 rounded-md hover:bg-gray-800"
         >
           <Plus size={12} /> New Task
         </button>
@@ -79,7 +79,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
               value={form.title}
               onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
               placeholder="Follow up with lead..."
-              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400"
+              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900"
             />
           </div>
           <div>
@@ -88,7 +88,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
               value={form.description}
               onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
               rows={2}
-              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-violet-400 resize-none"
+              className="w-full mt-0.5 text-[13px] border border-slate-200 rounded-md px-2.5 py-1.5 outline-none focus:border-gray-900 resize-none"
             />
           </div>
           <div className="flex gap-3">
@@ -126,7 +126,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
             <button type="button" onClick={() => setShowForm(false)} className="text-[13px] px-3 py-1.5 rounded-md hover:bg-slate-200 text-slate-600">
               Cancel
             </button>
-            <button type="submit" disabled={saving || !form.title.trim()} className="text-[13px] px-4 py-1.5 rounded-md bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50">
+            <button type="submit" disabled={saving || !form.title.trim()} className="text-[13px] px-4 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
               {saving ? "Creating..." : "Create"}
             </button>
           </div>
@@ -168,7 +168,7 @@ export function TasksTab({ tasks, leadId, onTaskCreated, onTaskToggle }: TasksTa
                   {task.assignedTo && (
                     <div className="flex items-center gap-1">
                       <Avatar className="w-4 h-4">
-                        <AvatarFallback className="text-[9px] bg-violet-100 text-violet-700">
+                        <AvatarFallback className="text-[9px] bg-gray-100 text-gray-900">
                           {task.assignedTo.name?.[0]}
                         </AvatarFallback>
                       </Avatar>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Filter, RefreshCw, MoreHorizontal, Mail, Building, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,15 +9,35 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu"
 import QRCode from "qrcode.react"
 
 const STATUS_DOT: Record<string, string> = {
-  New:         "bg-blue-500",
+  New:         "bg-gray-900",
   Nurture:     "bg-yellow-500",
   Qualified:   "bg-green-500",
   Deal: "bg-emerald-500",
   Unqualified: "bg-gray-400",
   Junk: "bg-red-500",
+}
+
+const STATUS_BADGE: Record<string, string> = {
+  New:         "bg-gray-50 text-gray-900 border-gray-200",
+  Nurture:     "bg-yellow-50 text-yellow-600 border-yellow-100",
+  Qualified:   "bg-green-50 text-green-600 border-green-100",
+  Deal:        "bg-emerald-50 text-emerald-600 border-emerald-100",
+  Unqualified: "bg-gray-50 text-gray-600 border-gray-200",
+  Junk:        "bg-red-50 text-red-600 border-red-100",
 }
 
 type Lead = {
@@ -47,6 +67,38 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
   const [viewOpen, setViewOpen] = useState(false)
   const [view, setView] = useState<'list' | 'card'>('list')
 
+  // Filter, Sort, and Columns state
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'nameAsc' | 'nameDesc'>('newest')
+  const [visibleColumns, setVisibleColumns] = useState({
+    organization: true,
+    status: true,
+    jobTitle: true,
+    source: true,
+    email: true,
+    mobile: true,
+    assignedTo: true,
+  })
+
+  useEffect(() => {
+    leads.forEach((lead) => {
+      void router.prefetch(`/leads/${lead.id}`)
+    })
+  }, [leads, router])
+
+  const filteredLeads = leads
+    .filter(lead => !statusFilter || lead.status === statusFilter)
+    .sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      
+      const nameA = `${a.firstName} ${a.lastName ?? ''}`.toLowerCase()
+      const nameB = `${b.firstName} ${b.lastName ?? ''}`.toLowerCase()
+      if (sortBy === 'nameAsc') return nameA.localeCompare(nameB)
+      if (sortBy === 'nameDesc') return nameB.localeCompare(nameA)
+      return 0
+    })
+
   async function refresh() {
     setLoading(true)
     const res = await fetch("/api/leads")
@@ -57,6 +109,10 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
 
   function openLead(leadId: string) {
     router.push(`/leads/${leadId}`)
+  }
+
+  function prefetchLead(leadId: string) {
+    void router.prefetch(`/leads/${leadId}`)
   }
 
   return (
@@ -120,20 +176,70 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-          <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
-            <Filter size={13} />
-            Filter
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
-            Sort
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
-            Columns
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
+                <Filter size={13} />
+                {statusFilter ? `Status: ${statusFilter}` : "Filter"}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setStatusFilter(null)}>
+                All Statuses
+              </DropdownMenuItem>
+              {Object.keys(STATUS_DOT).map(status => (
+                <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
+                  {status}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
+                Sort
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuRadioGroup
+                value={sortBy}
+                onValueChange={(val) => setSortBy(val as "newest" | "oldest" | "nameAsc" | "nameDesc")}
+              >
+                <DropdownMenuRadioItem value="newest">Newest First</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="oldest">Oldest First</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="nameAsc">Name (A-Z)</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="nameDesc">Name (Z-A)</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:bg-slate-100 px-2.5 py-1.5 rounded-md border border-slate-200">
+                Columns
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {Object.keys(visibleColumns).map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col}
+                  checked={visibleColumns[col as keyof typeof visibleColumns]}
+                  onCheckedChange={(val) => 
+                    setVisibleColumns(prev => ({ ...prev, [col]: val }))
+                  }
+                >
+                  {col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g, ' $1')}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="sm"
             onClick={() => setModalOpen(true)}
-            className="bg-violet-600 hover:bg-violet-700 text-white text-[13px] h-8 px-3 gap-1.5"
+            className="bg-gray-900 hover:bg-gray-800 text-white text-[13px] h-8 px-3 gap-1.5"
           >
             <Plus size={13} />
             New Lead
@@ -157,6 +263,19 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
               Create Lead
             </button>
           </div>
+        ) : filteredLeads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+              <Filter size={18} className="text-slate-400" />
+            </div>
+            <p className="text-[13px] font-medium text-slate-500">No leads match filters</p>
+            <button
+              onClick={() => setStatusFilter(null)}
+              className="mt-1 text-[13px] text-slate-900 underline underline-offset-2"
+            >
+              Clear Filters
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             {view === "list" ? (
@@ -167,20 +286,22 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                       <input type="checkbox" className="rounded w-3.5 h-3.5" />
                     </th>
                     <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Name</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Organization</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Status</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Job Title</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Source</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Email</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Mobile No</th>
-                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Assigned To</th>
+                    {visibleColumns.organization && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Organization</th>}
+                    {visibleColumns.status && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Status</th>}
+                    {visibleColumns.jobTitle && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Job Title</th>}
+                    {visibleColumns.source && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Source</th>}
+                    {visibleColumns.email && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Email</th>}
+                    {visibleColumns.mobile && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Mobile No</th>}
+                    {visibleColumns.assignedTo && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Assigned To</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {leads.map((lead) => (
+                  {filteredLeads.map((lead) => (
                     <tr
                       key={lead.id}
                       onClick={() => openLead(lead.id)}
+                      onMouseEnter={() => prefetchLead(lead.id)}
+                      onFocus={() => prefetchLead(lead.id)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault()
@@ -198,20 +319,20 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                         {lead.salutation ? `${lead.salutation} ` : ""}
                         {lead.firstName} {lead.lastName ?? ""}
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">{lead.organization?.name ?? "—"}</td>
-                      <td className="px-3 py-2.5">
+                      {visibleColumns.organization && <td className="px-3 py-2.5 text-slate-500">{lead.organization?.name ?? "—"}</td>}
+                      {visibleColumns.status && <td className="px-3 py-2.5">
                         <span className="inline-flex items-center gap-1.5 text-[12px] text-slate-700">
                           <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[lead.status] ?? "bg-gray-400"}`} />
                           {lead.status}
                         </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-slate-500">{lead.jobTitle ?? "—"}</td>
-                      <td className="px-3 py-2.5 text-slate-500">{lead.source ?? "—"}</td>
-                      <td className="px-3 py-2.5 text-slate-500">{lead.email ?? "—"}</td>
-                      <td className="px-3 py-2.5 text-slate-500">
+                      </td>}
+                      {visibleColumns.jobTitle && <td className="px-3 py-2.5 text-slate-500">{lead.jobTitle ?? "—"}</td>}
+                      {visibleColumns.source && <td className="px-3 py-2.5 text-slate-500">{lead.source ?? "—"}</td>}
+                      {visibleColumns.email && <td className="px-3 py-2.5 text-slate-500">{lead.email ?? "—"}</td>}
+                      {visibleColumns.mobile && <td className="px-3 py-2.5 text-slate-500">
                         {lead.mobile ? (
                           <span
-                            className="cursor-pointer text-violet-600 hover:underline"
+                            className="cursor-pointer text-gray-700 hover:underline"
                             onClick={(e) => {
                               e.stopPropagation()
                               setQrMobile(lead.mobile);
@@ -221,12 +342,12 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                             {lead.mobile}
                           </span>
                         ) : "—"}
-                      </td>
-                      <td className="px-3 py-2.5">
+                      </td>}
+                      {visibleColumns.assignedTo && <td className="px-3 py-2.5">
                         {lead.assignedTo ? (
                           <div className="flex items-center gap-1.5">
                             <Avatar className="w-5 h-5">
-                              <AvatarFallback className="text-[10px] bg-violet-100 text-violet-700">
+                              <AvatarFallback className="text-[10px] bg-gray-100 text-gray-700">
                                 {lead.assignedTo.name?.[0] ?? "U"}
                               </AvatarFallback>
                             </Avatar>
@@ -235,79 +356,102 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {leads.map((lead) => (
-                  <div
-                    key={lead.id}
-                    onClick={() => openLead(lead.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        openLead(lead.id)
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    className="border border-slate-200 rounded-lg overflow-hidden hover:border-slate-300 transition-colors cursor-pointer"
-                  >
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                            {lead.salutation ? `${lead.salutation[0]}` : ""}{lead.firstName[0] ?? ""}{lead.lastName?.[0] ?? ""}
+                {filteredLeads.map((lead) => {
+                  const badgeClass = STATUS_BADGE[lead.status] ?? "bg-gray-50 text-gray-600 border-gray-200"
+                  return (
+                    <div
+                      key={lead.id}
+                      onClick={() => openLead(lead.id)}
+                      onMouseEnter={() => prefetchLead(lead.id)}
+                      onFocus={() => prefetchLead(lead.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          openLead(lead.id)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors cursor-pointer bg-white"
+                    >
+                      <div className="p-4">
+                        {/* Top Row: Badges & More Menu */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${badgeClass}`}>
+                              {lead.status}
+                            </span>
+                            {lead.source && (
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                                {lead.source}
+                              </span>
+                            )}
                           </div>
-                          <div>
-                            <p className="font-medium text-slate-900">
-                              {lead.salutation ? `${lead.salutation} ` : ""}
-                              {lead.firstName} {lead.lastName ?? ""}
-                            </p>
-                            <p className="text-xs text-slate-500">{lead.crmId}</p>
-                          </div>
+                          <button 
+                            className="text-gray-400 hover:text-gray-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
                         </div>
-                        <span className={`w-2 h-2 rounded-full ${STATUS_DOT[lead.status] ?? "bg-gray-400"}`} />
-                      </div>
 
-                      <div className="space-y-2 text-sm text-slate-600">
-                        <div className="flex items-center space-x-2">
-                          <PhoneIcon size={4} className="w-4 h-4" />
-                          <span>{lead.mobile ?? "—"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Mail size={4} className="w-4 h-4" />
-                          <span>{lead.email ?? "—"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Building className="w-4 h-4" />
-                          <span>{lead.organization?.name ?? "—"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Briefcase className="w-4 h-4" />
-                          <span>{lead.jobTitle ?? "—"}</span>
-                        </div>
-                      </div>
+                        {/* Title */}
+                        <h3 className="font-semibold text-gray-900 text-[14px] truncate">
+                          {lead.salutation ? `${lead.salutation} ` : ""}{lead.firstName} {lead.lastName ?? ""}
+                        </h3>
 
-                      {lead.assignedTo && (
-                        <div className="mt-3 pt-2 border-t border-slate-100">
-                          <p className="text-xs font-medium text-slate-500">Assigned To</p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Avatar className="w-8 h-8">
-                              <AvatarFallback className="text-[10px] bg-violet-100 text-violet-700">
-                                {lead.assignedTo.name?.[0] ?? "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-slate-600">{lead.assignedTo.name}</span>
+                        {/* Sub Info (like Due Date & Checklist) */}
+                        <div className="flex items-center gap-4 mt-3 text-[12px] text-gray-500">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Building className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{lead.organization?.name ?? "No Org"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{lead.jobTitle ?? "No Title"}</span>
                           </div>
                         </div>
-                      )}
+
+                        {/* Bottom Row: Avatars & Icons */}
+                        <div className="flex items-center justify-between mt-5">
+                          {/* Avatars */}
+                          <div className="flex items-center">
+                            {lead.assignedTo ? (
+                              <Avatar className="w-6 h-6 border-2 border-white rounded-full bg-gray-100">
+                                <AvatarFallback className="text-[9px] font-medium text-gray-700">
+                                  {lead.assignedTo.name?.[0] ?? "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 text-gray-400" title="Unassigned">
+                                <Plus size={10} strokeWidth={3} />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Right Icons */}
+                          <div className="flex items-center gap-3 text-gray-400 text-[12px]">
+                            <div className="flex items-center gap-1" title={lead.email ?? "No email"}>
+                              <Mail size={13} />
+                              <span>{lead.email ? "1" : "0"}</span>
+                            </div>
+                            <div className="flex items-center gap-1" title={lead.mobile ?? "No phone"}>
+                              <PhoneIcon size={13} className="w-[13px] h-[13px]" />
+                              <span>{lead.mobile ? "1" : "0"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

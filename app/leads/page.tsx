@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { AppLayout } from "@/components/layout/app-layout"
 import { LeadsClient } from "./leads-client"
 
+export const dynamic = "force-dynamic"
+
 export default async function LeadsPage() {
   const leads = await prisma.lead.findMany({
     include: { 

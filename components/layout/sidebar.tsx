@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { useLayoutEffect, useMemo, useRef } from "react"
+import { useLayoutEffect, useRef } from "react"
 import type { ReactNode } from "react";
 import gsap from "gsap";
 import {
@@ -18,7 +18,6 @@ import {
   Mail,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
   LogOut,
   Menu,
   X,
@@ -33,7 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Settings } from "lucide-react"
 
 type NavItem = {
   href: string
@@ -64,13 +62,6 @@ const pinnedViews: NavItem[] = [
 
 
 
-const notificationItem: NavItem = {
-  href: "/notifications",
-  icon: Bell,
-  label: "Notifications",
-  badge: "0",
-}
-
 const SIDEBAR_WIDTH = {
   expanded: 264,
   collapsed: 72,
@@ -85,6 +76,7 @@ export function Sidebar() {
     useSidebar()
   const asideRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isCompact = isCollapsed && !isMobile
 
   function isActive(href: string) {
     const base = href.split("?")[0]
@@ -132,7 +124,7 @@ export function Sidebar() {
     })
   }, [isMobile, isMobileOpen])
 
-  const userInitials = useMemo(() => {
+  const userInitials = (() => {
     if (!user?.name) return "U"
     return user.name
       .split(" ")
@@ -140,7 +132,7 @@ export function Sidebar() {
       .map((part) => part[0]?.toUpperCase())
       .join("")
       .slice(0, 2)
-  }, [user?.name])
+  })()
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -163,7 +155,7 @@ export function Sidebar() {
           type="button"
           onClick={toggleMobile}
           aria-label="Open sidebar"
-          className="fixed left-3 top-3 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+          className="fixed left-3 top-3 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/60"
         >
           <Menu size={18} />
         </button>
@@ -173,8 +165,8 @@ export function Sidebar() {
         ref={asideRef}
         id="crm-sidebar"
         className={cn(
-          "fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-slate-200 bg-white text-slate-900 shadow-sm transition-colors",
-          "md:static md:shrink-0"
+          "fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#E5E7EB] bg-white text-slate-900 shadow-sm transition-colors",
+          "md:sticky md:top-0 md:h-dvh md:shrink-0 md:self-start"
         )}
         data-collapsed={isCollapsed ? "true" : "false"}
         style={{ width: SIDEBAR_WIDTH.expanded }}
@@ -182,33 +174,56 @@ export function Sidebar() {
         <div ref={containerRef} className="flex h-full flex-col">
 
         {/* Logo + controls */}
-        <div className={cn("flex items-center border-b border-slate-100 transition-all", isCollapsed ? "justify-center gap-1 px-1 py-3" : "justify-between px-3 py-3")}>
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="flex shrink-0 h-8 w-8 items-center justify-center rounded-lg bg-violet-600 shadow-sm shadow-violet-500/30">
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-white">
-                <path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.18L19 8.5v7L12 19.82 5 15.5v-7L12 4.18z" />
+        <div className={cn("flex items-center border-b border-gray-100 transition-all", isCompact ? "justify-center px-2 py-3" : "justify-between px-3 py-3")}>
+          <div
+            className={cn("flex items-center gap-2 overflow-hidden", isCompact && "cursor-pointer justify-center group/logo")}
+            onClick={isCompact ? toggleCollapsed : undefined}
+            title={isCompact ? "Click to expand sidebar" : undefined}
+          >
+            <div
+              className={cn(
+                "flex shrink-0 h-8 w-8 items-center justify-center rounded-lg bg-gray-900 shadow-sm shadow-slate-900/20 transition-all",
+                isCompact &&
+                  "group-hover/logo:bg-slate-800 group-hover/logo:shadow-md group-hover/logo:shadow-slate-900/30 group-hover/logo:scale-110"
+              )}
+            >
+              <svg
+                viewBox="0 0 64 64"
+                className="h-4 w-4 fill-none stroke-white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {/* V */}
+                <path d="M10 14L22 50L34 14" />
+
+                {/* O */}
+                <circle cx="46" cy="32" r="10" />
+
+                {/* Small accent dot */}
+                <circle cx="52" cy="20" r="2" className="fill-white stroke-none" />
               </svg>
             </div>
-            <div className={cn("transition-all", isCollapsed ? "hidden" : "block")}>
+            <div className={cn("transition-all", isCompact ? "hidden" : "block")}>
               <p
                 className="text-[13px] font-semibold leading-tight text-slate-900"
                 data-sidebar-label
               >
-                CRM
+                Voro
               </p>
               <p className="text-[11px] leading-tight text-slate-500" data-sidebar-label>
                 Workspace
               </p>
             </div>
           </div>
-          {!isMobile ? (
+          {!isMobile && !isCompact ? (
             <button
               type="button"
               onClick={toggleCollapsed}
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              aria-label="Collapse sidebar"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
             >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              <ChevronLeft size={16} />
             </button>
           ) : null}
 
@@ -217,7 +232,7 @@ export function Sidebar() {
                 type="button"
                 onClick={closeMobile}
                 aria-label="Close sidebar"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/60"
               >
                 <X size={16} />
               </button>
@@ -225,20 +240,24 @@ export function Sidebar() {
           </div>
 
           {/* User info */}
-          <div className="border-b border-slate-100 px-3 py-4">
-            <div className={cn("flex items-center gap-2", isCollapsed && "justify-center")}>
+          <div className="border-b border-gray-100 px-3 py-4">
+            <div className={cn("flex gap-2", isCompact ? "flex-col items-center" : "items-center")}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      "flex flex-1 items-center gap-3 rounded-md p-1 hover:bg-slate-50 transition-colors outline-none",
-                      isCollapsed && "justify-center"
+                      "flex items-center gap-3 rounded-md p-1 hover:bg-slate-50 transition-colors outline-none",
+                      isCompact ? "w-10 justify-center p-0" : "flex-1"
                     )}
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-600">
-                      {userInitials}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm font-semibold text-gray-600 overflow-hidden">
+                      {user?.image ? (
+                        <img src={user.image} alt={user?.name ?? "User"} className="h-full w-full object-cover" />
+                      ) : (
+                        userInitials
+                      )}
                     </div>
-                    <div className={cn("flex flex-1 items-center justify-between overflow-hidden", isCollapsed && "hidden")}>
+                    <div className={cn("flex flex-1 items-center justify-between overflow-hidden", isCompact && "hidden")}>
                       <div className="space-y-0.5 text-left">
                         <p className="text-[13px] font-medium text-slate-900 truncate">
                           {user?.name ?? "CRM User"}
@@ -251,11 +270,9 @@ export function Sidebar() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer flex items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
+                  <DropdownMenuItem className="cursor-pointer flex items-center">
+                    <span className="mr-2 flex h-4 w-4 items-center justify-center">⚙️</span>
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer flex items-center text-red-600 focus:text-red-600">
@@ -264,25 +281,23 @@ export function Sidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {!isCollapsed && (
-                <button
-                  type="button"
-                  aria-label="Notifications"
-                  onClick={() => {
-                    router.push("/notifications")
-                    if (isMobile) closeMobile()
-                  }}
-                  className="relative rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                >
-                  <Bell size={16} />
-                  <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-500"></span>
-                </button>
-              )}
+              <button
+                type="button"
+                aria-label="Notifications"
+                onClick={() => {
+                  router.push("/notifications")
+                  if (isMobile) closeMobile()
+                }}
+                className="relative rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              >
+                <Bell size={16} />
+                <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-500"></span>
+              </button>
             </div>
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3" aria-label="Primary">
+          <nav className={cn("flex-1 space-y-2 px-2 py-3", isCompact ? "overflow-hidden" : "overflow-y-auto")} aria-label="Primary">
             <div className="space-y-1">
               {primaryNavItems.map((item) => (
                 <SidebarLink
@@ -339,29 +354,30 @@ function SidebarLink({ item, isActive, isCollapsed, onClick }: SidebarLinkProps)
   return (
     <Link
       href={item.href}
+      prefetch
       onClick={onClick}
       aria-current={isActive ? "page" : undefined}
       aria-label={item.label}
       title={isCollapsed ? item.label : undefined}
       className={cn(
-        "group flex items-center gap-2 rounded-md px-2 py-2 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+        "group flex items-center rounded-md px-2 py-2 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400/60",
+        isCollapsed ? "justify-center" : "gap-2",
         isActive
-          ? "bg-violet-50 text-violet-700"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-        isCollapsed && "justify-center"
+          ? "bg-[#F3F4F6] text-[#111827] border-l-2 border-gray-900"
+          : "text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] border-l-2 border-transparent"
       )}
     >
       <Icon
         size={16}
         className={cn(
-          "shrink-0 text-slate-400 transition-colors",
-          isActive ? "text-violet-600" : "group-hover:text-slate-500"
+          "shrink-0 text-[#9CA3AF] transition-colors",
+          isActive ? "text-[#374151]" : "group-hover:text-[#6B7280]"
         )}
       />
-      <span className="flex-1 truncate" data-sidebar-label>
+      <span className={cn("flex-1 truncate", isCollapsed && "hidden")} data-sidebar-label>
         {item.label}
       </span>
-      {item.badge ? (
+      {item.badge && !isCollapsed ? (
         <span
           className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500"
           data-sidebar-label
@@ -382,11 +398,11 @@ type SidebarSectionProps = {
 
 function SidebarSection({ label, isCollapsed, variant = "default", children }: SidebarSectionProps) {
   return (
-    <div className={cn("space-y-1", variant === "divider" && "border-t border-slate-200 pt-4")}>
+    <div className={cn("space-y-1", variant === "divider" && "border-t border-gray-100 pt-4")}>
       <div className={cn("flex items-center gap-1 px-2", isCollapsed && "justify-center")}>
-        <ChevronDown size={12} className="text-slate-400" />
+        <ChevronDown size={12} className="text-[#9CA3AF]" />
         <span
-          className="text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+          className={cn("text-[11px] font-semibold uppercase tracking-wider text-[#9CA3AF]", isCollapsed && "hidden")}
           data-sidebar-label
         >
           {label}

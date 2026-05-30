@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useMemo, useState } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 type SidebarContextValue = {
@@ -22,17 +22,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 767px)")
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-
-  useEffect(() => {
-    if (isMobile) {
-      setIsCollapsed(false)
-    } else {
-      setIsMobileOpen(false)
-    }
-  }, [isMobile])
+  const effectiveCollapsed = isMobile ? false : isCollapsed
+  const effectiveMobileOpen = isMobile ? isMobileOpen : false
 
   const toggleCollapsed = useCallback(() => {
-    setIsCollapsed((prev) => !prev)
+   setIsCollapsed((prev) => !prev)
   }, [])
 
   const toggleMobile = useCallback(() => {
@@ -49,15 +43,23 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      isCollapsed,
+      isCollapsed: effectiveCollapsed,
       isMobile,
-      isMobileOpen,
+      isMobileOpen: effectiveMobileOpen,
       toggleCollapsed,
       toggleMobile,
       openMobile,
       closeMobile,
     }),
-    [isCollapsed, isMobile, isMobileOpen, toggleCollapsed, toggleMobile, openMobile, closeMobile]
+    [
+      effectiveCollapsed,
+      effectiveMobileOpen,
+      isMobile,
+      toggleCollapsed,
+      toggleMobile,
+      openMobile,
+      closeMobile,
+    ]
   )
 
   return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>

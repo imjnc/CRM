@@ -6,7 +6,13 @@ import { useEffect, useState } from "react"
  * Returns true when the provided media query matches the current viewport.
  */
 export function useMediaQuery(query: string, defaultValue = false) {
-  const [matches, setMatches] = useState<boolean>(defaultValue)
+  const [matches, setMatches] = useState<boolean>(() => {
+    if (typeof window === "undefined") {
+      return defaultValue
+    }
+
+    return window.matchMedia(query).matches
+  })
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -15,8 +21,6 @@ export function useMediaQuery(query: string, defaultValue = false) {
     const handleChange = (event: MediaQueryListEvent) => {
       setMatches(event.matches)
     }
-
-    setMatches(mediaQueryList.matches)
 
     if (mediaQueryList.addEventListener) {
       mediaQueryList.addEventListener("change", handleChange)
