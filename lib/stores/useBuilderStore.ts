@@ -12,6 +12,16 @@ export type CanvasElement = {
   text?: string;
   fontSize?: number;
   src?: string;
+  
+  // Advanced Properties
+  fontFamily?: string;
+  fontStyle?: string; // bold, italic, bold italic, normal
+  textDecoration?: string; // underline, line-through, empty string
+  align?: string; // left, center, right, justify
+  letterSpacing?: number;
+  lineHeight?: number;
+  opacity?: number;
+  rotation?: number;
 };
 
 interface BuilderState {
@@ -20,12 +30,18 @@ interface BuilderState {
   history: CanvasElement[][];
   historyStep: number;
   stageRef: any | null;
+  clipboard: CanvasElement | null;
+  
   setStageRef: (ref: any) => void;
   addElement: (element: Omit<CanvasElement, 'id'>) => void;
   updateElement: (id: string, attrs: Partial<CanvasElement>) => void;
   selectElement: (id: string | null) => void;
   removeElement: (id: string) => void;
   duplicateElement: (id: string) => void;
+  copyElement: () => void;
+  pasteElement: () => void;
+  bringToFront: (id: string) => void;
+  sendToBack: (id: string) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -48,11 +64,12 @@ export const useBuilderStore = create<BuilderState>((set, get) => {
     history: [[]],
     historyStep: 0,
     stageRef: null,
+    clipboard: null,
 
     setStageRef: (ref) => set({ stageRef: ref }),
 
     addElement: (element) => set((state) => {
-      const newElements = [...state.elements, { ...element, id: Date.now().toString() }];
+      const newElements = [...state.elements, { ...element, id: Date.now().toString(), opacity: 1, rotation: 0 }];
       return saveHistory(newElements);
     }),
 
@@ -83,6 +100,43 @@ export const useBuilderStore = create<BuilderState>((set, get) => {
       const newElements = [...state.elements, newElement];
       const newState = saveHistory(newElements);
       return { ...newState, selectedId: newElement.id };
+    }),
+
+    copyElement: () => set((state) => {
+      if (!state.selectedId) return state;
+      const elToCopy = state.elements.find((el) => el.id === state.selectedId);
+      return { clipboard: elToCopy || null };
+    }),
+
+    pasteElement: () => set((state) => {
+      if (!state.clipboard) return state;
+      
+      const newElement = { 
+        ...state.clipboard, 
+        id: Date.now().toString(),
+        x: state.clipboard.x + 20, 
+        y: state.clipboard.y + 20 
+      };
+      
+      const newElements = [...state.elements, newElement];
+      const newState = saveHistory(newElements);
+      return { ...newState, selectedId: newElement.id };
+    }),
+
+    bringToFront: (id) => set((state) => {
+      const element = state.elements.find(el => el.id === id);
+      if (!element) return state;
+      const filteredElements = state.elements.filter(el => el.id !== id);
+      const newElements = [...filteredElements, element];
+      return saveHistory(newElements);
+    }),
+
+    sendToBack: (id) => set((state) => {
+      const element = state.elements.find(el => el.id === id);
+      if (!element) return state;
+      const filteredElements = state.elements.filter(el => el.id !== id);
+      const newElements = [element, ...filteredElements];
+      return saveHistory(newElements);
     }),
 
     undo: () => set((state) => {
