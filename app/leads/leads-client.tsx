@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Filter, RefreshCw, MoreHorizontal, Mail, Building, Briefcase } from "lucide-react"
+import Link from "next/link"
+import { Plus, Filter, RefreshCw, MoreHorizontal, Mail, Building, Briefcase, Paintbrush } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CreateLeadModal } from "@/components/leads/create-lead-modal"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -293,6 +294,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                     {visibleColumns.email && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Email</th>}
                     {visibleColumns.mobile && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Mobile No</th>}
                     {visibleColumns.assignedTo && <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Assigned To</th>}
+                    <th className="text-left px-3 py-2.5 font-medium text-slate-500 text-[12px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -357,6 +359,12 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                           <span className="text-slate-300">—</span>
                         )}
                       </td>}
+                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/leads/${lead.id}/build`} className="flex items-center gap-1 text-[13px] text-gray-700 hover:text-gray-900 font-medium">
+                          <Paintbrush size={13} />
+                          <span>Build</span>
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -394,12 +402,22 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                               </span>
                             )}
                           </div>
-                          <button 
-                            className="text-gray-400 hover:text-gray-600"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal size={14} />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <Link 
+                              href={`/leads/${lead.id}/build`} 
+                              className="text-gray-400 hover:text-gray-900"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Build Design"
+                            >
+                              <Paintbrush size={14} />
+                            </Link>
+                            <button 
+                              className="text-gray-400 hover:text-gray-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal size={14} />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Title */}
