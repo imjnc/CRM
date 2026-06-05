@@ -16,6 +16,7 @@ import {
   CheckSquare,
   Phone,
   Mail,
+  Package,
   ChevronDown,
   ChevronLeft,
   LogOut,
@@ -25,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./sidebar-context"
+import { NotificationsSheet } from "./notifications-sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +47,7 @@ const primaryNavItems: NavItem[] = [
   { href: "/deals", icon: Briefcase, label: "Deals" },
   { href: "/contacts", icon: ContactRound, label: "Contacts" },
   { href: "/organizations", icon: Building2, label: "Organizations" },
+  { href: "/products", icon: Package, label: "Products" },
   { href: "/notes", icon: StickyNote, label: "Notes" },
   { href: "/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/call-logs", icon: Phone, label: "Call Logs" },
@@ -281,18 +284,19 @@ export function Sidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <button
-                type="button"
-                aria-label="Notifications"
-                onClick={() => {
-                  router.push("/notifications")
-                  if (isMobile) closeMobile()
-                }}
-                className="relative rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-              >
-                <Bell size={16} />
-                <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-500"></span>
-              </button>
+              <NotificationsSheet>
+                <button
+                  type="button"
+                  aria-label="Notifications"
+                  onClick={() => {
+                    if (isMobile) closeMobile()
+                  }}
+                  className="relative rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                >
+                  <Bell size={16} />
+                  <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-500"></span>
+                </button>
+              </NotificationsSheet>
             </div>
           </div>
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Filter, RefreshCw, MoreHorizontal, Mail, Building, Briefcase, Paintbrush } from "lucide-react"
+import { Plus, Filter, RefreshCw, MoreHorizontal, Mail, Building, Briefcase, Paintbrush, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CreateLeadModal } from "@/components/leads/create-lead-modal"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -116,11 +116,22 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
     void router.prefetch(`/leads/${leadId}`)
   }
 
+  async function handleDeleteLead(leadId: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!confirm("Are you sure you want to delete this lead?")) return
+    const res = await fetch(`/api/leads/${leadId}`, { method: "DELETE" })
+    if (res.ok) {
+      setLeads(leads.filter(l => l.id !== leadId))
+    } else {
+      alert("Failed to delete lead")
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
 
       {/* Top bar — matches screenshot */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white">
+      <div className="flex flex-wrap items-center justify-between px-5 py-3 border-b border-slate-200 bg-white gap-3">
         <div className="flex items-center gap-2">
           {/* View selector */}
           <div className="relative">
@@ -280,9 +291,10 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
         ) : (
           <div className="space-y-4">
             {view === "list" ? (
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-white">
+              <div className="w-full overflow-x-auto">
+                <table className="w-full min-w-[900px] text-[13px]">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-white">
                     <th className="text-left pl-4 pr-2 py-2.5 w-8">
                       <input type="checkbox" className="rounded w-3.5 h-3.5" />
                     </th>
@@ -359,18 +371,28 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                           <span className="text-slate-300">—</span>
                         )}
                       </td>}
-                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                        <Link href={`/leads/${lead.id}/build`} className="flex items-center gap-1 text-[13px] text-gray-700 hover:text-gray-900 font-medium">
-                          <Paintbrush size={13} />
-                          <span>Build</span>
-                        </Link>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <Link href={`/leads/${lead.id}/build`} className="flex items-center gap-1 text-[13px] text-gray-700 hover:text-gray-900 font-medium" onClick={(e) => e.stopPropagation()}>
+                            <Paintbrush size={13} />
+                            <span>Build</span>
+                          </Link>
+                          <button
+                            onClick={(e) => handleDeleteLead(lead.id, e)}
+                            className="text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete Lead"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-6 bg-slate-50/50 min-h-full">
                 {filteredLeads.map((lead) => {
                   const badgeClass = STATUS_BADGE[lead.status] ?? "bg-gray-50 text-gray-600 border-gray-200"
                   return (
@@ -387,17 +409,17 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                       }}
                       role="button"
                       tabIndex={0}
-                      className="border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors cursor-pointer bg-white"
+                      className="border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer bg-white flex flex-col h-full"
                     >
-                      <div className="p-4">
+                      <div className="p-5 flex flex-col flex-1">
                         {/* Top Row: Badges & More Menu */}
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${badgeClass}`}>
+                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide border ${badgeClass}`}>
                               {lead.status}
                             </span>
                             {lead.source && (
-                              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                              <span className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                                 {lead.source}
                               </span>
                             )}
@@ -405,48 +427,63 @@ export function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
                           <div className="flex items-center gap-2">
                             <Link 
                               href={`/leads/${lead.id}/build`} 
-                              className="text-gray-400 hover:text-gray-900"
+                              className="text-slate-400 hover:text-indigo-600 transition-colors p-1.5 hover:bg-indigo-50 rounded-md"
                               onClick={(e) => e.stopPropagation()}
                               title="Build Design"
                             >
-                              <Paintbrush size={14} />
+                              <Paintbrush size={15} />
                             </Link>
                             <button 
-                              className="text-gray-400 hover:text-gray-600"
+                              className="text-slate-400 hover:text-slate-900 transition-colors p-1.5 hover:bg-slate-100 rounded-md"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <MoreHorizontal size={14} />
+                              <MoreHorizontal size={15} />
+                            </button>
+                            <button
+                              className="text-slate-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-md"
+                              onClick={(e) => handleDeleteLead(lead.id, e)}
+                              title="Delete Lead"
+                            >
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </div>
 
                         {/* Title */}
-                        <h3 className="font-semibold text-gray-900 text-[14px] truncate">
+                        <h3 className="font-semibold text-slate-900 text-[15px] truncate mb-1">
                           {lead.salutation ? `${lead.salutation} ` : ""}{lead.firstName} {lead.lastName ?? ""}
                         </h3>
 
                         {/* Sub Info (like Due Date & Checklist) */}
-                        <div className="flex items-center gap-4 mt-3 text-[12px] text-gray-500">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <Building className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{lead.organization?.name ?? "No Org"}</span>
+                        <div className="flex flex-col gap-2 mt-3 text-[13px] text-slate-500 mb-4">
+                          <div className="flex items-center gap-2 truncate">
+                            <Building className="w-4 h-4 shrink-0 text-slate-400" />
+                            <span className="truncate">{lead.organization?.name ?? "No Organization"}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 truncate">
-                            <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                          <div className="flex items-center gap-2 truncate">
+                            <Briefcase className="w-4 h-4 shrink-0 text-slate-400" />
                             <span className="truncate">{lead.jobTitle ?? "No Title"}</span>
                           </div>
                         </div>
 
+                        {/* Spacer to push bottom row down */}
+                        <div className="flex-1" />
+
                         {/* Bottom Row: Avatars & Icons */}
-                        <div className="flex items-center justify-between mt-5">
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
                           {/* Avatars */}
                           <div className="flex items-center">
                             {lead.assignedTo ? (
-                              <Avatar className="w-6 h-6 border-2 border-white rounded-full bg-gray-100">
-                                <AvatarFallback className="text-[9px] font-medium text-gray-700">
-                                  {lead.assignedTo.name?.[0] ?? "U"}
-                                </AvatarFallback>
-                              </Avatar>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="w-7 h-7 border-2 border-white rounded-full bg-indigo-100 shadow-sm">
+                                  <AvatarFallback className="text-[10px] font-medium text-indigo-700">
+                                    {lead.assignedTo.name?.[0] ?? "U"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-[12px] font-medium text-slate-600 truncate max-w-[80px]">
+                                  {lead.assignedTo.name}
+                                </span>
+                              </div>
                             ) : (
                               <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 text-gray-400" title="Unassigned">
                                 <Plus size={10} strokeWidth={3} />

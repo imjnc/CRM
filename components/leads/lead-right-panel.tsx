@@ -163,7 +163,7 @@ export function LeadRightPanel({ lead, onUpdate, onTabChange }: LeadRightPanelPr
   }
 
   return (
-    <div className="w-[280px] shrink-0 border-l border-slate-200 overflow-y-auto overflow-x-hidden bg-white">
+    <div className="w-full lg:w-[280px] shrink-0 lg:border-l border-t lg:border-t-0 border-slate-200 overflow-y-auto overflow-x-hidden bg-white">
 
       {/* CRM ID */}
       <div className="px-4 pt-4 pb-2">

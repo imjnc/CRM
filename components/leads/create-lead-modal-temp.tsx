@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -29,14 +29,14 @@ const INDUSTRIES = [
 const TERRITORIES = ["India", "USA", "UK", "UAE", "Singapore", "Australia", "Other"]
 const COUNTRY_CODES = ["+1", "+44", "+91", "+61", "+81", "+49", "+33", "+86", "+971", "+65"]
 
-const inputStyle = "!border-t-0 !border-l-0 !border-r-0 !border-b-2 !border-b-gray-300 !rounded-none !px-0 !shadow-none !outline-none !ring-0 !ring-offset-0 focus:!outline-none focus-visible:!outline-none focus:!ring-0 focus-visible:!ring-0 focus:!ring-offset-0 focus-visible:!ring-offset-0 focus:!border-b-black focus-visible:!border-b-black !bg-transparent transition-colors";
+const inputStyle = ""
 
 export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [countryCode, setCountryCode] = useState("+91")
   const [mobileNumber, setMobileNumber] = useState("")
-  const initialFormState = {
+  const [form, setForm] = useState({
     salutation: "",
     firstName: "",
     lastName: "",
@@ -52,17 +52,7 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
     annualRevenue: "",
     noOfEmployees: "",
     organization: "",
-  }
-
-  const [form, setForm] = useState(initialFormState)
-
-  useEffect(() => {
-    if (open) {
-      setForm(initialFormState)
-      setMobileNumber("")
-      setCountryCode("+91")
-    }
-  }, [open])
+  })
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -88,12 +78,7 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
       if (res.ok) {
         onClose()
         router.refresh()
-      } else {
-        const err = await res.json()
-        alert(err.error || "Failed to create lead. Please check the inputs.")
       }
-    } catch (err) {
-      alert("An unexpected error occurred.")
     } finally {
       setLoading(false)
     }
@@ -125,7 +110,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>First Name <span className="text-red-500">*</span></Label>
               <Input
-                className={inputStyle}
                 placeholder="John"
                 value={form.firstName}
                 onChange={(e) => set("firstName", e.target.value)}
@@ -135,7 +119,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>Last Name</Label>
               <Input
-                className={inputStyle}
                 placeholder="Doe"
                 value={form.lastName}
                 onChange={(e) => set("lastName", e.target.value)}
@@ -148,7 +131,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>Email</Label>
               <Input
-                className={inputStyle}
                 type="email"
                 placeholder="john@doe.com"
                 value={form.email}
@@ -200,7 +182,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>Organization</Label>
               <Input
-                className={inputStyle}
                 placeholder="Frappe Technologies"
                 value={form.organization}
                 onChange={(e) => set("organization", e.target.value)}
@@ -209,7 +190,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>Website</Label>
               <Input
-                className={inputStyle}
                 placeholder="https://frappe.io"
                 value={form.website}
                 onChange={(e) => set("website", e.target.value)}
@@ -248,7 +228,6 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
             <div className="space-y-1.5">
               <Label>Annual Revenue</Label>
               <Input
-                className={inputStyle}
                 type="number"
                 placeholder="500000"
                 value={form.annualRevenue}
@@ -315,3 +294,4 @@ export function CreateLeadModal({ open, onClose }: CreateLeadModalProps) {
     </Dialog>
   )
 }
+

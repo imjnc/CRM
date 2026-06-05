@@ -55,7 +55,9 @@ const ChartRenderer = ({ type, data }: { type: string, data: any[] }) => {
   );
 };
 
-export default function CanvasArea() {
+import ProposalDocument from "./ProposalDocument";
+
+export default function CanvasArea(props: any) {
   const [mounted, setMounted] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   
@@ -218,14 +220,23 @@ export default function CanvasArea() {
   if (!mounted) return null;
 
   return (
-    <div ref={containerRef} className="relative select-none">
+    <div ref={containerRef} className="relative select-none" style={{ width: 800, height: 1130, backgroundColor: 'white' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 800, height: 1130, zIndex: 0 }}>
+        {/* @ts-ignore */}
+        <ProposalDocument lead={props.lead} productsCatalog={props.productsCatalog} />
+      </div>
       <Stage 
         width={800} 
-        height={600} 
+        height={1130} 
         ref={stageRef}
+        style={{ position: 'absolute', top: 0, left: 0, zIndex: 10, pointerEvents: 'none' }} // Canvas must be transparent to clicks where empty, but react-konva doesn't pass through by default. Wait, if pointerEvents='none', we can't drag!
+        // We will manage it differently. Konva container needs to be transparent.
         onContextMenu={handleContextMenu}
-        onClick={() => {
+        onClick={(e) => {
           closeMenu();
+          if (e.target === e.target.getStage() || e.target.id() === 'bg') {
+            selectElement(null);
+          }
         }}
         onMouseDown={(e) => {
           if (e.target === e.target.getStage() || e.target.id() === 'bg') {
@@ -243,7 +254,13 @@ export default function CanvasArea() {
         }}
       >
         <Layer>
-          <Rect id="bg" width={800} height={600} fill="#ffffff" />
+          <Html>
+            <div style={{ width: 800, minHeight: 1130, position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
+              {/* @ts-ignore */}
+              <ProposalDocument lead={(props as any).lead} productsCatalog={(props as any).productsCatalog} />
+            </div>
+          </Html>
+          <Rect id="bg" width={800} height={1130} fill="transparent" />
           
           {elements.map((el) => {
             const commonProps = {
