@@ -9,26 +9,64 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          String    @default("sales_rep") // admin | manager | sales_rep
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           String    @default("sales_rep") // super_admin | admin | manager | sales_rep
+  organizationId String?
+  teamId         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  team         Team?         @relation(fields: [teamId], references: [id])
 
   accounts Account[]
   sessions Session[]
 
   assignedLeads Lead[]       @relation("LeadAssignee")
+  createdLeads  Lead[]       @relation("LeadCreator")
+
+  assignedContacts Contact[] @relation("ContactAssignee")
+  createdContacts  Contact[] @relation("ContactCreator")
+
   assignedTasks Task[]       @relation("TaskAssignee")
+  createdTasks  Task[]       @relation("TaskCreator")
+
+  assignedProducts Product[] @relation("ProductAssignee")
+  createdProducts  Product[] @relation("ProductCreator")
+
+  assignedDesigns Design[]   @relation("DesignAssignee")
+  createdDesigns  Design[]   @relation("DesignCreator")
+
+  assignedTemplates Template[] @relation("TemplateAssignee")
+  createdTemplates  Template[] @relation("TemplateCreator")
+
+  assignedImages Image[]     @relation("ImageAssignee")
+  createdImages  Image[]     @relation("ImageCreator")
+
+  assignedDocuments Document[] @relation("DocumentAssignee")
+  createdDocuments  Document[] @relation("DocumentCreator")
+
   activities    Activity[]
   comments      Comment[]
   notes         Note[]
   emails        LeadEmail[]
   callLogs      CallLog[]
+  meetings      Meeting[]
+}
+
+model Team {
+  id             String @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  users          User[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // NextAuth required models
@@ -87,11 +125,14 @@ model Lead {
   noOfEmployees String? // 1-10, 11-50, 51-200, 201-500, 501-1000, 1000+
   customData   Json?    // for custom fields
 
+  createdById    String?
   assignedToId   String?
   organizationId String?
 
+  createdBy    User?         @relation("LeadCreator", fields: [createdById], references: [id])
   assignedTo   User?         @relation("LeadAssignee", fields: [assignedToId], references: [id])
   organization Organization? @relation(fields: [organizationId], references: [id])
+  contact      Contact?
 
   activities Activity[]
   tasks      Task[]
@@ -99,13 +140,46 @@ model Lead {
   emails     LeadEmail[]
   callLogs   CallLog[]
   notes      Note[]
+  meetings   Meeting[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([assignedToId])
+  @@index([createdById])
   @@index([createdAt])
+}
+
+model Contact {
+  id           String   @id @default(cuid())
+  salutation   String?
+  firstName    String
+  lastName     String?
+  email        String?
+  mobile       String?
+  jobTitle     String?
+  department   String?
+  lifecycle    String   @default("Customer") // Customer, Evangelist, Subscriber, Opportunity, Churned
+  customData   Json?
+
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+  leadId         String?   @unique
+
+  createdBy    User?         @relation("ContactCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("ContactAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  
+  // Link back to original lead for tracking
+  lead         Lead?         @relation(fields: [leadId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([assignedToId])
 }
 
 model Organization {
@@ -118,7 +192,15 @@ model Organization {
   noOfEmployees String?
   logo         String? // URL to uploaded logo
 
-  leads Lead[]
+  users      User[]
+  teams      Team[]
+  leads      Lead[]
+  contacts   Contact[]
+  products   Product[]
+  designs    Design[]
+  templates  Template[]
+  images     Image[]
+  documents  Document[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,7 +213,7 @@ model Activity {
   meta    Json?  // extra data e.g. { from: "New", to: "Qualified" }
 
   leadId String?
-  userId String
+  userId String // treated as created_by
 
   lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User  @relation(fields: [userId], references: [id])
@@ -149,9 +231,11 @@ model Task {
   done        Boolean   @default(false)
 
   leadId       String?
+  createdById  String?
   assignedToId String?
 
   lead       Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdBy  User? @relation("TaskCreator", fields: [createdById], references: [id])
   assignedTo User? @relation("TaskAssignee", fields: [assignedToId], references: [id])
 
   createdAt DateTime @default(now())
@@ -163,7 +247,7 @@ model Comment {
   content String
 
   leadId String?
-  userId String
+  userId String // created_by
 
   lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User  @relation(fields: [userId], references: [id])
@@ -177,7 +261,7 @@ model Note {
   content String
 
   leadId String?
-  userId String
+  userId String // created_by
 
   lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User  @relation(fields: [userId], references: [id])
@@ -195,13 +279,33 @@ model LeadEmail {
   toEmail   String?
 
   leadId String?
-  userId String?
+  userId String? // created_by
 
   lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id])
 
   sentAt    DateTime @default(now())
+  openedAt  DateTime?
+  clickedAt DateTime?
   createdAt DateTime @default(now())
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("Scheduled") // Scheduled, Completed, Cancelled
+  
+  leadId      String?
+  userId      String?
+
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model CallLog {
@@ -214,11 +318,102 @@ model CallLog {
   toNumber    String?
 
   leadId String?
-  userId String?
+  userId String? // created_by
 
   lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id])
 
   calledAt  DateTime @default(now())
   createdAt DateTime @default(now())
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  sku           String?  @unique
+  description   String?
+  sellingPrice  Float    @default(0)
+  purchasePrice Float    @default(0)
+  tax           Float    @default(0)
+  image         String?
+  status        String   @default("Active")
+
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+
+  createdBy    User?         @relation("ProductCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("ProductAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Design {
+  id             String   @id @default(cuid())
+  name           String
+  content        Json?
+  
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+
+  createdBy    User?         @relation("DesignCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("DesignAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Template {
+  id             String   @id @default(cuid())
+  name           String
+  content        Json?
+  
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+
+  createdBy    User?         @relation("TemplateCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("TemplateAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Image {
+  id             String   @id @default(cuid())
+  url            String
+  name           String?
+  
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+
+  createdBy    User?         @relation("ImageCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("ImageAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Document {
+  id             String   @id @default(cuid())
+  url            String
+  name           String?
+  
+  createdById    String?
+  assignedToId   String?
+  organizationId String?
+
+  createdBy    User?         @relation("DocumentCreator", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("DocumentAssignee", fields: [assignedToId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

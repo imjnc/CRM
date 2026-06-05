@@ -13,6 +13,8 @@ type LeadEmail = {
   fromEmail: string | null
   toEmail: string | null
   sentAt: string
+  openedAt: string | null
+  clickedAt: string | null
 }
 
 interface EmailsTabProps {
@@ -351,6 +353,16 @@ export function EmailsTab({ emails, leadId, leadEmail, onEmailCreated }: EmailsT
                     {formatDistanceToNow(new Date(email.sentAt), { addSuffix: true })}
                   </p>
                 </div>
+                {email.openedAt && (
+                  <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200">
+                    Opened
+                  </span>
+                )}
+                {email.clickedAt && (
+                  <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                    Clicked
+                  </span>
+                )}
                 {expandedId === email.id
                   ? <ChevronDown size={13} className="text-slate-400 shrink-0" />
                   : <ChevronRight size={13} className="text-slate-400 shrink-0" />

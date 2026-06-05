@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { AppLayout } from "@/components/layout/app-layout"
-import { LeadsClient } from "./leads-client"
+import { ProductsClient } from "./products-client"
 import { getAuthWhere } from "@/lib/permissions"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function LeadsPage() {
+export default async function ProductsPage() {
   let authWhere;
   try {
     authWhere = await getAuthWhere()
@@ -14,19 +14,14 @@ export default async function LeadsPage() {
     redirect("/login")
   }
 
-  const leads = await prisma.lead.findMany({
+  const products = await prisma.product.findMany({
     where: authWhere,
-    include: { 
-      assignedTo: { select: { id: true, name: true, image: true } },
-      organization: true
-    },
     orderBy: { createdAt: "desc" },
-    take: 20,
   })
 
   return (
     <AppLayout>
-      <LeadsClient initialLeads={JSON.parse(JSON.stringify(leads))} />
+      <ProductsClient initialProducts={products} />
     </AppLayout>
   )
 }

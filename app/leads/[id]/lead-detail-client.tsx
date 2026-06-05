@@ -10,6 +10,10 @@ import { ActivityTab } from "@/components/leads/tabs/activity-tab"
 import { EmailsTab } from "@/components/leads/tabs/emails-tab"
 import { TasksTab } from "@/components/leads/tabs/tasks-tab"
 import { NotesTab } from "@/components/leads/tabs/notes-tab"
+import { ProductsTab } from "@/components/leads/tabs/products-tab"
+import { MeetingsTab } from "@/components/leads/tabs/meetings-tab"
+import { MergeLeadModal } from "@/components/leads/merge-lead-modal"
+import { Calendar, GitMerge } from "lucide-react"
 
 const STATUSES = ["New", "Nurture", "Qualified", "Deal", "Unqualified", "Junk"]
 const STATUS_DOT: Record<string, string> = {
@@ -21,14 +25,16 @@ const STATUS_DOT: Record<string, string> = {
   Junk:        "bg-red-500",
 }
 
-const TAB_IDS = ["activity", "emails", "tasks", "notes"] as const
+const TAB_IDS = ["activity", "meetings", "emails", "tasks", "notes", "products"] as const
 type LeadTab = (typeof TAB_IDS)[number]
 
 const TABS: Array<{ id: LeadTab; label: string; icon: typeof Activity }> = [
   { id: "activity", label: "Activity",  icon: Activity },
+  { id: "meetings", label: "Meetings",  icon: Calendar },
   { id: "emails",   label: "Emails",    icon: Mail },
   { id: "tasks",    label: "Tasks",     icon: CheckSquare },
   { id: "notes",    label: "Notes",     icon: FileText },
+  { id: "products", label: "Products",  icon: FileText }, // using FileText for now
 ]
 
 type Lead = any
@@ -39,6 +45,7 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
   const searchParams = useSearchParams()
   const [lead, setLead] = useState<Lead>(initialLead)
   const [statusOpen, setStatusOpen] = useState(false)
+  const [showMerge, setShowMerge] = useState(false)
 
   const activeTab = getActiveTab(searchParams.get("tab"))
 
@@ -55,7 +62,10 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
-  async function updateField(field: string, value: string) {
+  async function updateField(field: string, value: any) {
+    // Optimistic update
+    setLead((prev: Lead) => ({ ...prev, [field]: value }));
+
     const res = await fetch(`/api/leads/${lead.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -64,6 +74,7 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
     if (res.ok) {
       const updated = await res.json()
       setLead((prev: Lead) => ({ ...prev, ...updated }))
+      router.refresh()
     }
   }
 
@@ -74,22 +85,40 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
 
   function handleActivityCreated(activity: any) {
     setLead((prev: Lead) => ({ ...prev, activities: [activity, ...prev.activities] }))
+    router.refresh()
   }
 
   function handleEmailCreated(email: any) {
     setLead((prev: Lead) => ({ ...prev, emails: [email, ...prev.emails] }))
+    router.refresh()
   }
 
   function handleCallCreated(call: any) {
     setLead((prev: Lead) => ({ ...prev, callLogs: [call, ...prev.callLogs] }))
+    router.refresh()
   }
 
   function handleTaskCreated(task: any) {
     setLead((prev: Lead) => ({ ...prev, tasks: [task, ...prev.tasks] }))
+    router.refresh()
   }
 
   function handleNoteCreated(note: any) {
     setLead((prev: Lead) => ({ ...prev, notes: [note, ...prev.notes] }))
+    router.refresh()
+  }
+
+  function handleMeetingCreated(meeting: any) {
+    setLead((prev: Lead) => ({ ...prev, meetings: [meeting, ...(prev.meetings || [])] }))
+    router.refresh()
+  }
+
+  function handleMeetingUpdated(meeting: any) {
+    setLead((prev: Lead) => ({
+      ...prev,
+      meetings: prev.meetings.map((m: any) => m.id === meeting.id ? meeting : m)
+    }))
+    router.refresh()
   }
 
   async function handleTaskToggle(taskId: string, done: boolean) {
@@ -102,17 +131,18 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
       ...prev,
       tasks: prev.tasks.map((t: any) => t.id === taskId ? { ...t, done } : t),
     }))
+    router.refresh()
   }
 
   return (
     <div className="flex flex-col h-full">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-slate-200 bg-white shrink-0">
-        <div className="flex items-center gap-1 text-[13px]">
-          <Link href="/leads" className="text-slate-500 hover:text-slate-900">Leads</Link>
-          <ChevronRight size={13} className="text-slate-400" />
-          <span className="text-slate-900 font-medium">{fullName}</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-2.5 border-b border-slate-200 bg-white shrink-0 gap-3">
+        <div className="flex items-center gap-1 text-[13px] overflow-hidden whitespace-nowrap">
+          <Link href="/leads" className="text-slate-500 hover:text-slate-900 shrink-0">Leads</Link>
+          <ChevronRight size={13} className="text-slate-400 shrink-0" />
+          <span className="text-slate-900 font-medium truncate">{fullName}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -144,13 +174,20 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
             )}
           </div>
 
-          <div className="flex items-center gap-2 ml-6">
+          <div className="flex items-center gap-2 sm:ml-6">
+            <button
+              type="button"
+              onClick={() => setShowMerge(true)}
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 transition whitespace-nowrap"
+            >
+              <GitMerge size={14} /> Merge
+            </button>
             <button
               type="button"
               onClick={() => changeStatus("Deal")}
               disabled={lead.status === "Deal"}
               className={cn(
-                "inline-flex items-center rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
+                "inline-flex items-center rounded-md px-3 py-1.5 text-[12px] font-semibold transition whitespace-nowrap",
                 lead.status === "Deal"
                   ? "bg-gray-100 text-gray-900 cursor-default"
                   : "bg-gray-900 text-white hover:bg-gray-800"
@@ -163,7 +200,7 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-0 border-b border-slate-200 bg-white px-5 shrink-0" role="tablist" aria-label="Lead tabs">
+      <div className="flex items-center gap-0 border-b border-slate-200 bg-white px-5 shrink-0 overflow-x-auto whitespace-nowrap hide-scrollbar" role="tablist" aria-label="Lead tabs">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -187,7 +224,7 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         <div
           className="flex-1 overflow-y-auto"
           role="tabpanel"
@@ -199,6 +236,14 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
               activities={lead.activities}
               leadId={lead.id}
               onActivityCreated={handleActivityCreated}
+            />
+          )}
+          {activeTab === "meetings" && (
+            <MeetingsTab
+              meetings={lead.meetings || []}
+              leadId={lead.id}
+              onMeetingCreated={handleMeetingCreated}
+              onMeetingUpdated={handleMeetingUpdated}
             />
           )}
           {activeTab === "emails" && (
@@ -224,10 +269,27 @@ export function LeadDetailClient({ lead: initialLead }: { lead: Lead }) {
               onNoteCreated={handleNoteCreated}
             />
           )}
+          {activeTab === "products" && (
+            <ProductsTab
+              products={lead.customData?.products || []}
+              onProductsChanged={(products) => updateField("customData", { ...(lead.customData || {}), products })}
+            />
+          )}
         </div>
 
         <LeadRightPanel lead={lead} onUpdate={updateField} onTabChange={setTab} />
       </div>
+
+      {showMerge && (
+        <MergeLeadModal
+          currentLeadId={lead.id}
+          onClose={() => setShowMerge(false)}
+          onMerged={() => {
+            setShowMerge(false)
+            router.refresh()
+          }}
+        />
+      )}
 
     </div>
   )

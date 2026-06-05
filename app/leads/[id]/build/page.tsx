@@ -8,22 +8,24 @@ const CanvasArea = dynamic(() => import("@/components/builder/CanvasArea"), { ss
 
 export default function LeadBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const [lead, setLead] = useState<any>(null);
+  const [productsCatalog, setProductsCatalog] = useState<any[]>([]);
   const resolvedParams = use(params);
 
   useEffect(() => {
-    fetch(`/api/leads/${resolvedParams.id}`)
-      .then(res => res.json())
-      .then(data => setLead(data))
+    Promise.all([
+      fetch(`/api/leads/${resolvedParams.id}`).then(res => res.json()),
+      fetch(`/api/products`).then(res => res.json())
+    ])
+      .then(([leadData, productsData]) => {
+        setLead(leadData);
+        setProductsCatalog(productsData.products || []);
+      })
       .catch(console.error);
   }, [resolvedParams.id]);
 
   return (
-    <BuilderLayout lead={lead}>
-      <div className="flex h-full items-center justify-center">
-        <div className="bg-white shadow-lg ring-1 ring-gray-200">
-          <CanvasArea />
-        </div>
-      </div>
+    <BuilderLayout lead={lead} productsCatalog={productsCatalog}>
+      <CanvasArea lead={lead} productsCatalog={productsCatalog} />
     </BuilderLayout>
   )
 }

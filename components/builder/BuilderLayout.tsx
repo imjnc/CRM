@@ -1,10 +1,14 @@
 "use client";
 
-import { Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Star, Heart, Minus, MoveRight, Hexagon, Triangle, AppWindow, BarChart3, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Type, Square, Circle as CircleIcon, Image as ImageIcon, QrCode, Download, Database, Undo, Redo, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Star, Heart, Minus, MoveRight, Hexagon, Triangle, AppWindow, BarChart3, Plus, Trash2, Save } from "lucide-react";
 import { useBuilderStore } from "@/lib/stores/useBuilderStore";
+import { useProposalStore } from "@/lib/stores/useProposalStore";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
+import { toPng } from "html-to-image";
+import ProposalSettings from "./ProposalSettings";
 import { HexColorPicker } from "react-colorful";
 
 const BRAND_COLORS = [
@@ -20,11 +24,62 @@ const DEFAULT_CHART_DATA = [
   { name: 'Q4', value: 278 }
 ];
 
-export default function BuilderLayout({ children, lead }: { children: React.ReactNode, lead?: any }) {
+export default function BuilderLayout({ children, lead, productsCatalog }: { children: React.ReactNode, lead?: any, productsCatalog?: any[] }) {
   const { addElement, elements, selectedId, updateElement, stageRef, undo, redo, selectElement } = useBuilderStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [qrText, setQrText] = useState("");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
+
+  const handleSaveToCRM = async () => {
+    if (!lead || !lead.id) return;
+    setIsSaving(true);
+    try {
+      const state = useProposalStore.getState();
+      const customData = {
+        ...(lead.customData || {}),
+        products: state.products,
+        clientDetails: state.clientDetails,
+        orgDetails: state.orgDetails,
+        clientLogo: state.clientLogo,
+        logoSettings: state.logoSettings
+      };
+
+      const fullName = state.headerInfo.name || state.clientDetails.name || `${lead.firstName} ${lead.lastName || ''}`.trim();
+      const firstName = fullName.split(' ')[0];
+      const lastName = fullName.split(' ').slice(1).join(' ');
+      const email = state.headerInfo.email || state.orgDetails.email || lead.email;
+      const mobile = state.headerInfo.mobile || state.orgDetails.phone || lead.mobile;
+      const organizationName = state.headerInfo.org || state.orgDetails.company || lead.organization?.name;
+      const jobTitle = state.headerInfo.title || lead.jobTitle;
+      const industry = state.clientDetails.industry || lead.industry;
+
+      const res = await fetch(`/api/leads/${lead.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          firstName, 
+          lastName, 
+          email, 
+          mobile, 
+          jobTitle, 
+          industry, 
+          organizationName, 
+          customData 
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to update lead');
+      alert('Successfully synced to CRM!');
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to sync to CRM');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const selectedElement = elements.find(el => el.id === selectedId);
 
@@ -51,28 +106,68 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
     }
   };
 
-  const exportPNG = () => {
-    if (!stageRef) return;
+  const exportPNG = async () => {
     selectElement(null);
-    setTimeout(() => {
-      const dataURL = stageRef.toDataURL({ pixelRatio: 2 });
-      const link = document.createElement("a");
-      link.download = "design-export.png";
-      link.href = dataURL;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    const element = document.getElementById('proposal-document-container');
+    if (!element) {
+      alert("Could not find the document container to export.");
+      return;
+    }
+    
+    // Give state a moment to clear selection highlights
+    setTimeout(async () => {
+      try {
+        const dataURL = await toPng(element, { quality: 1, pixelRatio: 2 });
+        
+        const link = document.createElement("a");
+        link.download = "proposal.png";
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.error("Failed to export PNG:", err);
+        alert("Failed to generate PNG");
+      }
     }, 100);
   };
 
-  const exportPDF = () => {
-    if (!stageRef) return;
+  const exportPDF = async () => {
     selectElement(null);
-    setTimeout(() => {
-      const dataURL = stageRef.toDataURL({ pixelRatio: 2 });
-      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [800, 600] });
-      pdf.addImage(dataURL, "PNG", 0, 0, 800, 600);
-      pdf.save("design-export.pdf");
+    const containers = document.querySelectorAll('#proposal-document-container');
+    if (containers.length === 0) {
+      alert("Could not find the document container to export.");
+      return;
+    }
+    
+    // Only grab pages from the first container to avoid duplication
+    const pages = containers[0].querySelectorAll('.proposal-page');
+    if (pages.length === 0) {
+      alert("Could not find any pages to export.");
+      return;
+    }
+    
+    setTimeout(async () => {
+      try {
+        const pdf = new jsPDF({ 
+          orientation: "portrait", 
+          unit: "px", 
+          format: [800, 1130] 
+        });
+
+        for (let i = 0; i < pages.length; i++) {
+          const element = pages[i] as HTMLElement;
+          const dataURL = await toPng(element, { quality: 1, pixelRatio: 2 });
+          
+          if (i > 0) pdf.addPage();
+          pdf.addImage(dataURL, "PNG", 0, 0, 800, 1130);
+        }
+        
+        pdf.save("proposal.pdf");
+      } catch (err) {
+        console.error("Failed to export PDF:", err);
+        alert("Failed to generate PDF");
+      }
     }, 100);
   };
 
@@ -141,6 +236,14 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
       <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => router.push(lead?.id ? `/leads/${lead.id}` : '/leads')} 
+              className="flex items-center gap-1.5 p-1.5 px-3 text-gray-600 hover:text-black hover:bg-gray-100 rounded-md transition-colors mr-4 font-medium text-sm border border-gray-200"
+              title="Back to Lead"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
               <Type size={18} className="text-white" />
             </div>
@@ -152,23 +255,18 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={exportPNG} className="flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"><Download size={16} /> PNG</button>
+          {lead && (
+            <button onClick={handleSaveToCRM} disabled={isSaving} className="flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50">
+              <Save size={16} /> {isSaving ? 'Syncing...' : 'Sync to CRM'}
+            </button>
+          )}
+          <button onClick={exportPNG} className="flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm ml-2"><Download size={16} /> PNG</button>
           <button onClick={exportPDF} className="flex items-center gap-2 rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors shadow-sm"><Download size={16} /> PDF</button>
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
         <aside className="shrink-0 w-72 border-r border-gray-200 bg-white p-4 overflow-y-auto flex flex-col gap-6 scrollbar-hide shadow-sm z-10">
-          {lead && (
-            <section className="bg-gray-50 -mx-4 -mt-4 p-4 border-b border-gray-100 mb-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-800 mb-3 flex items-center gap-1.5"><Database size={14} /> CRM Context</h2>
-              <div className="text-sm text-black mb-3">
-                <div className="font-medium">{lead.firstName} {lead.lastName}</div>
-                <div className="text-gray-800">{lead.organization?.name}</div>
-                <div className="text-gray-800 text-xs mt-1 truncate">{lead.email}</div>
-              </div>
-              <button onClick={injectLeadData} className="w-full bg-black text-white text-sm font-medium rounded-md py-1.5 hover:bg-gray-800 transition-colors shadow-sm">Inject Lead Data</button>
-            </section>
-          )}
+
 
           <section>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Text & Media</h2>
@@ -181,6 +279,13 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
                 <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
               </button>
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-1.5"><Database size={14} /> Lead Data</h2>
+            <button onClick={injectLeadData} disabled={!lead} className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2.5 hover:bg-gray-100 transition-colors disabled:opacity-50 text-sm font-medium text-gray-700">
+              <Database size={16} /> Insert Lead Info
+            </button>
           </section>
 
           <section>
@@ -234,20 +339,15 @@ export default function BuilderLayout({ children, lead }: { children: React.Reac
           </section>
         </aside>
         
-        <main className="flex-1 overflow-auto p-8 flex flex-col items-center justify-center bg-gray-100/50">
-          <div className="bg-white shadow-lg shadow-gray-200/50 ring-1 ring-gray-200" style={{ width: 800, height: 600 }}>
+        <main className="flex-1 overflow-auto p-8 flex flex-col items-center justify-start bg-gray-100/50">
+          <div id="canvas-container" className="bg-white shadow-lg shadow-gray-200/50 ring-1 ring-gray-200 shrink-0" style={{ width: 800, height: 1130 }}>
             {children}
           </div>
         </main>
         
         <aside className="shrink-0 w-80 border-l border-gray-200 bg-white p-5 overflow-y-auto flex flex-col gap-6 shadow-sm z-10">
           {!selectedElement ? (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-               <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center">
-                 <Type size={20} className="text-gray-300" />
-               </div>
-               <div className="text-sm text-gray-400 font-medium">Select an element to edit properties</div>
-            </div>
+            <ProposalSettings />
           ) : (
             <>
               {/* MEDIA & CHART SPECIFIC CONTROLS */}

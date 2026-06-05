@@ -10,6 +10,7 @@ import type { NextAuthConfig } from "next-auth"
  * that queries the database is in auth.ts.
  */
 export const authConfig: NextAuthConfig = {
+  basePath: "/api/auth",
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -27,6 +28,8 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.organizationId = user.organizationId
+        token.teamId = user.teamId
       }
       return token
     },
@@ -34,6 +37,8 @@ export const authConfig: NextAuthConfig = {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.organizationId = token.organizationId as string | undefined
+        session.user.teamId = token.teamId as string | undefined
       }
       return session
     },
